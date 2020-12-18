@@ -6,8 +6,14 @@ type Store struct {
 	data map[string]string
 }
 
-func (store *Store) get(key string) (string, error) {
-	hasKey, err := store.has(key)
+func NewStore() *Store {
+	return &Store{
+		data: make(map[string]string),
+	}
+}
+
+func (store *Store) Get(key string) (string, error) {
+	hasKey, err := store.Has(key)
 
 	if err != nil {
 		return "", err
@@ -20,18 +26,18 @@ func (store *Store) get(key string) (string, error) {
 	return store.data[key], nil
 }
 
-func (store *Store) set(key string, val string) error {
+func (store *Store) Set(key string, val string) error {
 	store.data[key] = val
 	return nil
 }
 
-func (store *Store) has(key string) (bool, error) {
+func (store *Store) Has(key string) (bool, error) {
 	_, ok := store.data[key]
 	return ok, nil
 }
 
-func (store *Store) delete(key string) error {
-	hasKey, err := store.has(key)
+func (store *Store) Delete(key string) error {
+	hasKey, err := store.Has(key)
 
 	if err != nil {
 		return err
