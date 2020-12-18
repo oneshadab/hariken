@@ -1,47 +1,22 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
-	"os"
-	"strings"
-
-	"github.com/oneshadab/hariken/pkg/session"
+	"github.com/oneshadab/hariken/pkg/client"
+	"github.com/oneshadab/hariken/pkg/server"
 )
 
 func main() {
-	session := session.NewSession()
+	connString := "localhost:6768"
 
-	reader := bufio.NewReader(os.Stdin)
-
-	fmt.Println("Hariken shell version v0.1")
-
-	for {
-		fmt.Printf("$ ")
-
-		line, err := reader.ReadString('\n')
-		if err != nil {
-			panic("Failed to read line from console")
-		}
-
-		line = strings.TrimSuffix(line, "\n")
-		words := strings.Split(line, " ")
-
-		cmd := words[0]
-		args := words[1:]
-
-		if strings.ToUpper(cmd) == "EXIT" {
-			fmt.Println("KTHXBYE")
-			break
-		}
-
-		output, err := session.Exec(cmd, args)
-
-		if err != nil {
-			fmt.Println("ERROR:", err)
-			continue
-		}
-
-		fmt.Println(output)
+	server, err := server.NewServer(connString)
+	if err != nil {
+		panic(err)
 	}
+	go server.Listen()
+
+	client, err := client.NewClient(connString)
+	if err != nil {
+		panic(err)
+	}
+	client.Shell()
 }
