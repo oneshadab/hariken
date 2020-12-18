@@ -37,14 +37,14 @@ func (client *Client) Shell() error {
 	for {
 		fmt.Printf("$ ")
 
-		line, err := stdinReader.ReadString('\n')
+		msg, err := stdinReader.ReadString('\n')
 		if err != nil {
 			return fmt.Errorf("Failed to read string from stdin")
 		}
 
-		_, err = socketWriter.WriteString(line)
+		_, err = socketWriter.WriteString(msg)
 		if err != nil {
-			return err
+			return fmt.Errorf("Failed to write message to server")
 		}
 
 		err = socketWriter.Flush()
@@ -52,14 +52,14 @@ func (client *Client) Shell() error {
 			return err
 		}
 
-		msg, err := socketReader.ReadString('\n')
+		reply, err := socketReader.ReadString('\n')
 		if err != nil {
 			return err
 		}
 
-		fmt.Print(msg)
+		fmt.Print(reply)
 
-		if msg == "KTHXBYE\n" {
+		if reply == "KTHXBYE\n" {
 			return nil
 		}
 	}

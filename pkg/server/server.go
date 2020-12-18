@@ -49,24 +49,25 @@ func (server *Server) handleConnection(conn net.Conn) {
 	socketWriter := bufio.NewWriter(conn)
 
 	for {
-		line, err := socketReader.ReadString('\n')
-		if err != nil {
-			panic("Failed to read line from console")
-		}
-
-		line = strings.TrimSuffix(line, "\n")
-		words := strings.Split(line, " ")
-
-		cmd := words[0]
-		args := words[1:]
-
-		msg, err := server.Exec(socketWriter, cmd, args)
+		query, err := socketReader.ReadString('\n')
 		if err != nil {
 			fmt.Println("Something went wrong:", err)
 			return
 		}
 
-		_, err = socketWriter.WriteString(fmt.Sprintf("%s\n", msg))
+		query = strings.TrimSuffix(query, "\n")
+		parts := strings.Split(query, " ")
+
+		cmd := parts[0]
+		args := parts[1:]
+
+		result, err := server.Exec(socketWriter, cmd, args)
+		if err != nil {
+			fmt.Println("Something went wrong:", err)
+			return
+		}
+
+		_, err = socketWriter.WriteString(fmt.Sprintf("%s\n", result))
 		if err != nil {
 			fmt.Println("Something went wrong:", err)
 			return
