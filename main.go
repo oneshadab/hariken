@@ -1,22 +1,48 @@
 package main
 
 import (
+	"os"
+
 	"github.com/oneshadab/hariken/pkg/client"
 	"github.com/oneshadab/hariken/pkg/server"
 )
 
+const (
+	connString = "localhost:6768"
+)
+
 func main() {
-	connString := "localhost:6768"
-
-	server, err := server.NewServer(connString)
-	if err != nil {
-		panic(err)
+	cmd := "startServerAndConnect"
+	if len(os.Args) >= 2 {
+		cmd = os.Args[1]
 	}
-	go server.Listen()
 
+	if cmd == "connect" {
+		connect()
+	}
+
+	if cmd == "startServer" {
+		startServer()
+	}
+
+	if cmd == "startServerAndConnect" {
+		go startServer()
+		connect()
+	}
+}
+
+func connect() {
 	client, err := client.NewClient(connString)
 	if err != nil {
 		panic(err)
 	}
 	client.Shell()
+}
+
+func startServer() {
+	server, err := server.NewServer(connString)
+	if err != nil {
+		panic(err)
+	}
+	server.WaitForConnections()
 }

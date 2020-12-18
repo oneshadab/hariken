@@ -30,7 +30,7 @@ func NewServer(connString string) (*Server, error) {
 	return &server, nil
 }
 
-func (server *Server) Listen() {
+func (server *Server) WaitForConnections() {
 	for {
 		conn, err := server.listener.Accept()
 		if err != nil {
