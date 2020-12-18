@@ -63,19 +63,19 @@ func (server *Server) handleConnection(conn net.Conn) {
 
 		result, err := server.Exec(cmd, args)
 		if err != nil {
-			fmt.Println("Something went wrong:", err)
+			fmt.Println("Failed to execute query", err)
 			return
 		}
 
 		_, err = socketWriter.WriteString(fmt.Sprintf("%s\n", result))
 		if err != nil {
-			fmt.Println("Something went wrong:", err)
+			fmt.Println("Failed to write to client", err)
 			return
 		}
 
 		err = socketWriter.Flush()
 		if err != nil {
-			fmt.Println("Something went wrong:", err)
+			fmt.Println("Failed to flush buffer", err)
 			return
 		}
 	}
