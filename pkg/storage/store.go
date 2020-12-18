@@ -12,18 +12,19 @@ func NewStore() *Store {
 	}
 }
 
-func (store *Store) Get(key string) (string, error) {
+func (store *Store) Get(key string) (*string, error) {
 	hasKey, err := store.Has(key)
 
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if !hasKey {
-		return "", fmt.Errorf("key `%s` not found", key)
+		return nil, nil
 	}
 
-	return store.data[key], nil
+	val := store.data[key]
+	return &val, nil
 }
 
 func (store *Store) Set(key string, val string) error {
