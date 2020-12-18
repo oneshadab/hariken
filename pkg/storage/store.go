@@ -20,7 +20,7 @@ func (store *Store) Get(key string) (string, error) {
 	}
 
 	if !hasKey {
-		return "", fmt.Errorf("key %s not found", key)
+		return "", fmt.Errorf("key `%s` not found", key)
 	}
 
 	return store.data[key], nil
@@ -44,7 +44,7 @@ func (store *Store) Delete(key string) error {
 	}
 
 	if !hasKey {
-		return fmt.Errorf("key %s not found", key)
+		return fmt.Errorf("key `%s` not found", key)
 	}
 
 	delete(store.data, key)

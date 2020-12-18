@@ -64,5 +64,5 @@ func (S *Session) Exec(cmd string, args []string) (string, error) {
 		return "OK", nil
 	}
 
-	return "", fmt.Errorf("Command `%s` not found", CMD)
+	return "", fmt.Errorf("Command `%s` not found", cmd)
 }

@@ -14,6 +14,8 @@ func main() {
 
 	reader := bufio.NewReader(os.Stdin)
 
+	fmt.Println("Hariken shell version v0.1")
+
 	for {
 		fmt.Printf("$ ")
 
@@ -27,6 +29,11 @@ func main() {
 
 		cmd := words[0]
 		args := words[1:]
+
+		if strings.ToUpper(cmd) == "EXIT" {
+			fmt.Println("KTHXBYE")
+			break
+		}
 
 		output, err := session.Exec(cmd, args)
 
