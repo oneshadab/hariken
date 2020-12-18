@@ -61,7 +61,7 @@ func (server *Server) handleConnection(conn net.Conn) {
 		cmd := parts[0]
 		args := parts[1:]
 
-		result, err := server.Exec(socketWriter, cmd, args)
+		result, err := server.Exec(cmd, args)
 		if err != nil {
 			fmt.Println("Something went wrong:", err)
 			return
@@ -81,7 +81,7 @@ func (server *Server) handleConnection(conn net.Conn) {
 	}
 }
 
-func (S *Server) Exec(writer *bufio.Writer, cmd string, args []string) (string, error) {
+func (S *Server) Exec(cmd string, args []string) (string, error) {
 	CMD := strings.ToUpper(cmd)
 
 	if CMD == "GET" {
