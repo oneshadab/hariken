@@ -25,6 +25,8 @@ func NewClient(connString string) (*Client, error) {
 }
 
 func (client *Client) Shell() error {
+	defer client.conn.Close()
+
 	stdinReader := bufio.NewReader(os.Stdin)
 
 	socketReader := bufio.NewReader(client.conn)
@@ -50,12 +52,15 @@ func (client *Client) Shell() error {
 			return err
 		}
 
-		out, err := socketReader.ReadString('\n')
+		msg, err := socketReader.ReadString('\n')
 		if err != nil {
 			return err
 		}
 
-		fmt.Println(out)
-	}
+		fmt.Print(msg)
 
+		if msg == "KTHXBYE\n" {
+			return nil
+		}
+	}
 }
