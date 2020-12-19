@@ -11,7 +11,7 @@ import (
 
 type Server struct {
 	listener net.Listener
-	Store    *storage.Store
+	Store    storage.Store
 }
 
 func NewServer(connString string) (*Server, error) {
@@ -25,7 +25,10 @@ func NewServer(connString string) (*Server, error) {
 	}
 
 	// Todo: read from disk instead of creating new store each time
-	server.Store = storage.NewStore()
+	server.Store, err = storage.NewStore()
+	if err != nil {
+		return nil, err
+	}
 
 	return &server, nil
 }
