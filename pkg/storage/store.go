@@ -1,54 +1,13 @@
 package storage
 
-import "fmt"
-
-type Store struct {
-	data map[string]string
+type Store interface {
+	Get(key string) (*string, error)
+	Set(key string, val string) error
+	Has(key string) (bool, error)
+	Delete(key string) error
 }
 
-func NewStore() *Store {
-	return &Store{
-		data: make(map[string]string),
-	}
-}
-
-func (store *Store) Get(key string) (*string, error) {
-	hasKey, err := store.Has(key)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if !hasKey {
-		return nil, nil
-	}
-
-	val := store.data[key]
-	return &val, nil
-}
-
-func (store *Store) Set(key string, val string) error {
-	store.data[key] = val
-	return nil
-}
-
-func (store *Store) Has(key string) (bool, error) {
-	_, ok := store.data[key]
-	return ok, nil
-}
-
-func (store *Store) Delete(key string) error {
-	hasKey, err := store.Has(key)
-
-	if err != nil {
-		return err
-	}
-
-	if !hasKey {
-		return fmt.Errorf("key `%s` not found", key)
-	}
-
-	delete(store.data, key)
-
-	return nil
+func NewStore() (*MemTable, error) {
+	tempFile := "temp.db"
+	return NewMemTable(tempFile)
 }
