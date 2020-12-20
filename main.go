@@ -26,7 +26,7 @@ func main() {
 	}
 
 	if cmd == "startServerAndConnect" {
-		go startServer()
+		startServerAsync()
 		connect()
 	}
 }
@@ -45,4 +45,12 @@ func startServer() {
 		panic(err)
 	}
 	server.WaitForConnections()
+}
+
+func startServerAsync() {
+	server, err := server.NewServer(connString)
+	if err != nil {
+		panic(err)
+	}
+	go server.WaitForConnections()
 }
