@@ -8,6 +8,6 @@ type Store interface {
 }
 
 func NewStore() (*MemTable, error) {
-	tempFile := "temp.db"
+	tempFile := "temp/temp.db"
 	return NewMemTable(tempFile)
 }
