@@ -32,7 +32,7 @@ func main() {
 }
 
 func connect() {
-	client, err := client.NewClient(connString)
+	client, err := client.NewClient(clientConfig())
 	if err != nil {
 		panic(err)
 	}
@@ -40,7 +40,7 @@ func connect() {
 }
 
 func startServer() {
-	server, err := server.NewServer(connString)
+	server, err := server.NewServer(serverConfig())
 	if err != nil {
 		panic(err)
 	}
@@ -48,9 +48,21 @@ func startServer() {
 }
 
 func startServerAsync() {
-	server, err := server.NewServer(connString)
+	server, err := server.NewServer(serverConfig())
 	if err != nil {
 		panic(err)
 	}
 	go server.WaitForConnections()
+}
+
+func serverConfig() *server.Config {
+	return &server.Config{
+		ConnString: connString,
+	}
+}
+
+func clientConfig() *client.Config {
+	return &client.Config{
+		ConnString: connString,
+	}
 }

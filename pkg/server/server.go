@@ -12,22 +12,22 @@ import (
 type Server struct {
 	listener net.Listener
 	Store    storage.Store
+	config   *Config
 }
 
-func NewServer(connString string) (*Server, error) {
+func NewServer(config *Config) (*Server, error) {
 	var err error
 
-	server := Server{}
+	server := Server{
+		config: config,
+	}
 
-	server.listener, err = net.Listen("tcp", connString)
+	server.listener, err = net.Listen("tcp", config.ConnString)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create server: %s", err)
 	}
 
-	// Todo: read from disk instead of creating new store each time
-	tempFilePath := "temp/temp.db"
-
-	server.Store, err = storage.NewStore(tempFilePath)
+	server.Store, err = storage.NewStore(*config.DefaultStorePath())
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,8 @@ func (server *Server) startSession(conn net.Conn) {
 func (S *Server) Exec(cmd string, args []string) (string, error) {
 	CMD := strings.ToUpper(cmd)
 
-	if CMD == "GET" {
+	switch CMD {
+	case "GET":
 		val, err := S.Store.Get(args[0])
 
 		if err != nil {
@@ -101,9 +102,8 @@ func (S *Server) Exec(cmd string, args []string) (string, error) {
 		}
 
 		return fmt.Sprintf("\"%s\"", *val), nil
-	}
 
-	if CMD == "SET" {
+	case "SET":
 		key := args[0]
 		val := args[1]
 
@@ -113,9 +113,8 @@ func (S *Server) Exec(cmd string, args []string) (string, error) {
 		}
 
 		return "OK", nil
-	}
 
-	if CMD == "HAS" {
+	case "HAS":
 		hasKey, err := S.Store.Has(args[0])
 
 		if err != nil {
@@ -127,9 +126,8 @@ func (S *Server) Exec(cmd string, args []string) (string, error) {
 		} else {
 			return "False", nil
 		}
-	}
 
-	if CMD == "DELETE" {
+	case "DELETE":
 		err := S.Store.Delete(args[0])
 
 		if err != nil {
@@ -137,11 +135,11 @@ func (S *Server) Exec(cmd string, args []string) (string, error) {
 		}
 
 		return "OK", nil
-	}
 
-	if CMD == "EXIT" {
+	case "EXIT":
 		return "KTHXBYE", nil
-	}
 
-	return "", fmt.Errorf("Command `%s` not found", cmd)
+	default:
+		return "", fmt.Errorf("Command `%s` not found", cmd)
+	}
 }

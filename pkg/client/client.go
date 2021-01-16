@@ -8,15 +8,16 @@ import (
 )
 
 type Client struct {
-	conn net.Conn
+	conn   net.Conn
+	config *Config
 }
 
-func NewClient(connString string) (*Client, error) {
+func NewClient(config *Config) (*Client, error) {
 	var err error
 
 	client := Client{}
 
-	client.conn, err = net.Dial("tcp", connString)
+	client.conn, err = net.Dial("tcp", config.ConnString)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create client: %s", err)
 	}
