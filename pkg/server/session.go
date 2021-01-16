@@ -23,7 +23,10 @@ func NewSession(connReader *bufio.Reader, connWriter *bufio.Writer, config *Conf
 		writer: *connWriter,
 	}
 
-	session.loadDefaultStore()
+	err := session.loadDefaultStore()
+	if err != nil {
+		return nil, err
+	}
 
 	return &session, nil
 }
@@ -108,6 +111,13 @@ func (S *Session) Exec(cmd string, args []string) (string, error) {
 
 		return "OK", nil
 
+	case "USE":
+		err := S.loadStore(args[0])
+		if err != nil {
+			return "", err
+		}
+		return "OK", nil
+
 	case "EXIT":
 		return "KTHXBYE", nil
 
@@ -117,18 +127,21 @@ func (S *Session) Exec(cmd string, args []string) (string, error) {
 }
 
 func (S *Session) loadDefaultStore() error {
-	defaultStorePath := S.config.DefaultStorePath()
-	if defaultStorePath == nil {
-		// No default store specified, so nothing to do
+	if S.config.DefaultStoreName == nil {
+		// No default store specified so nothing to do
 		return nil
 	}
 
-	defaultStore, err := storage.NewStore(*defaultStorePath)
+	return S.loadStore(*S.config.DefaultStoreName)
+}
+
+func (S *Session) loadStore(storeName string) error {
+	store, err := storage.NewStore(S.config.StorePath(storeName))
 	if err != nil {
 		return err
 	}
 
-	S.store = defaultStore
+	S.store = store
 
 	return nil
 }
