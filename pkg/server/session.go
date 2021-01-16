@@ -23,7 +23,7 @@ func NewSession(connReader *bufio.Reader, connWriter *bufio.Writer, config *Conf
 		writer: *connWriter,
 	}
 
-	err := session.loadDefaultStore()
+	err := session.loadStore(config.DefaultStoreName)
 	if err != nil {
 		return nil, err
 	}
@@ -124,15 +124,6 @@ func (S *Session) Exec(cmd string, args []string) (string, error) {
 	default:
 		return fmt.Sprintf("Command `%s` not found", cmd), nil
 	}
-}
-
-func (S *Session) loadDefaultStore() error {
-	if S.config.DefaultStoreName == nil {
-		// No default store specified so nothing to do
-		return nil
-	}
-
-	return S.loadStore(*S.config.DefaultStoreName)
 }
 
 func (S *Session) loadStore(storeName string) error {

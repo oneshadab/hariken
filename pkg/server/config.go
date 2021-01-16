@@ -6,7 +6,7 @@ type Config struct {
 	ConnString  string
 	StorageRoot string
 
-	DefaultStoreName *string // The default store to use when a session is started
+	DefaultStoreName string // The default store to use when a session is started
 }
 
 func (c *Config) StorePath(storeName string) string {
