@@ -8,6 +8,17 @@ type Store interface {
 }
 
 func NewStore() (*MemTable, error) {
-	tempFile := "temp/temp.db"
-	return NewMemTable(tempFile)
+	tempFilePath := "temp/temp.db"
+
+	commitLog, err := NewCommitLog(tempFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	table, err := NewMemTable(commitLog)
+	if err != nil {
+		return nil, err
+	}
+
+	return table, nil
 }

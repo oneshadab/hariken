@@ -9,29 +9,24 @@ type MemTable struct {
 	commitLog *CommitLog
 }
 
-func NewMemTable(filePath string) (*MemTable, error) {
-	var err error
+// A new memtable is created from a commit log
+func NewMemTable(commitLog *CommitLog) (*MemTable, error) {
+	table := MemTable{
+		entries:   make(map[string]string),
+		commitLog: commitLog,
+	}
 
-	store := MemTable{}
-
-	store.commitLog, err = NewCommitLog(filePath)
+	err := table.loadFromLog()
 	if err != nil {
 		return nil, err
 	}
 
-	err = store.loadFromLog()
-	if err != nil {
-		return nil, err
-	}
-
-	return &store, nil
+	return &table, nil
 }
 
-func (store *MemTable) loadFromLog() error {
-	store.entries = make(map[string]string)
-
+func (table *MemTable) loadFromLog() error {
 	for {
-		entry, err := store.commitLog.Read()
+		entry, err := table.commitLog.Read()
 		if err != nil {
 			return err
 		}
@@ -41,17 +36,17 @@ func (store *MemTable) loadFromLog() error {
 		}
 
 		if entry.IsDeleted {
-			delete(store.entries, entry.Key)
+			delete(table.entries, entry.Key)
 		} else {
-			store.entries[entry.Key] = entry.Val
+			table.entries[entry.Key] = entry.Val
 		}
 	}
 
 	return nil
 }
 
-func (store *MemTable) Get(key string) (*string, error) {
-	hasKey, err := store.Has(key)
+func (table *MemTable) Get(key string) (*string, error) {
+	hasKey, err := table.Has(key)
 
 	if err != nil {
 		return nil, err
@@ -61,12 +56,12 @@ func (store *MemTable) Get(key string) (*string, error) {
 		return nil, nil
 	}
 
-	val := store.entries[key]
+	val := table.entries[key]
 	return &val, nil
 }
 
-func (store *MemTable) Set(key string, val string) error {
-	err := store.commitLog.Write(LogEntry{
+func (table *MemTable) Set(key string, val string) error {
+	err := table.commitLog.Write(LogEntry{
 		Key: key,
 		Val: val,
 	})
@@ -74,22 +69,22 @@ func (store *MemTable) Set(key string, val string) error {
 		return err
 	}
 
-	store.entries[key] = val
+	table.entries[key] = val
 	return nil
 }
 
-func (store *MemTable) Has(key string) (bool, error) {
-	_, ok := store.entries[key]
+func (table *MemTable) Has(key string) (bool, error) {
+	_, ok := table.entries[key]
 	return ok, nil
 }
 
-func (store *MemTable) Delete(key string) error {
-	err := store.commitLog.Write(LogEntry{
+func (table *MemTable) Delete(key string) error {
+	err := table.commitLog.Write(LogEntry{
 		Key:       key,
 		IsDeleted: true,
 	})
 
-	hasKey, err := store.Has(key)
+	hasKey, err := table.Has(key)
 	if err != nil {
 		return err
 	}
@@ -98,7 +93,7 @@ func (store *MemTable) Delete(key string) error {
 		return fmt.Errorf("key `%s` not found", key)
 	}
 
-	delete(store.entries, key)
+	delete(table.entries, key)
 
 	return nil
 }
