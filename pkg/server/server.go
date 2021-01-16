@@ -7,8 +7,9 @@ import (
 )
 
 type Server struct {
+	config *Config
+
 	listener net.Listener
-	config   *Config
 }
 
 func NewServer(config *Config) (*Server, error) {

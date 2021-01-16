@@ -9,23 +9,21 @@ import (
 )
 
 type Session struct {
-	Store  storage.Store
+	config *Config
+
+	store  storage.Store
 	reader bufio.Reader
 	writer bufio.Writer
 }
 
 func NewSession(connReader *bufio.Reader, connWriter *bufio.Writer, config *Config) (*Session, error) {
-	defaultStorePath := *config.DefaultStorePath()
-	store, err := storage.NewStore(defaultStorePath)
-	if err != nil {
-		return nil, err
-	}
-
 	session := Session{
-		Store:  store,
+		config: config,
 		reader: *connReader,
 		writer: *connWriter,
 	}
+
+	session.loadDefaultStore()
 
 	return &session, nil
 }
@@ -65,7 +63,7 @@ func (S *Session) Exec(cmd string, args []string) (string, error) {
 
 	switch CMD {
 	case "GET":
-		val, err := S.Store.Get(args[0])
+		val, err := S.store.Get(args[0])
 
 		if err != nil {
 			return "", err
@@ -81,7 +79,7 @@ func (S *Session) Exec(cmd string, args []string) (string, error) {
 		key := args[0]
 		val := args[1]
 
-		err := S.Store.Set(key, val)
+		err := S.store.Set(key, val)
 		if err != nil {
 			return "", err
 		}
@@ -89,7 +87,7 @@ func (S *Session) Exec(cmd string, args []string) (string, error) {
 		return "OK", nil
 
 	case "HAS":
-		hasKey, err := S.Store.Has(args[0])
+		hasKey, err := S.store.Has(args[0])
 
 		if err != nil {
 			return "", err
@@ -102,7 +100,7 @@ func (S *Session) Exec(cmd string, args []string) (string, error) {
 		}
 
 	case "DELETE":
-		err := S.Store.Delete(args[0])
+		err := S.store.Delete(args[0])
 
 		if err != nil {
 			return "", err
@@ -116,4 +114,21 @@ func (S *Session) Exec(cmd string, args []string) (string, error) {
 	default:
 		return fmt.Sprintf("Command `%s` not found", cmd), nil
 	}
+}
+
+func (S *Session) loadDefaultStore() error {
+	defaultStorePath := S.config.DefaultStorePath()
+	if defaultStorePath == nil {
+		// No default store specified, so nothing to do
+		return nil
+	}
+
+	defaultStore, err := storage.NewStore(*defaultStorePath)
+	if err != nil {
+		return err
+	}
+
+	S.store = defaultStore
+
+	return nil
 }
