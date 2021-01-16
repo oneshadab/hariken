@@ -13,7 +13,10 @@ type Client struct {
 }
 
 func NewClient(config *Config) (*Client, error) {
-	var err error
+	err := config.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create client: %s", err)
+	}
 
 	client := Client{}
 

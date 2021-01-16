@@ -13,7 +13,10 @@ type Server struct {
 }
 
 func NewServer(config *Config) (*Server, error) {
-	var err error
+	err := config.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create server: %s", err)
+	}
 
 	server := Server{
 		config: config,
