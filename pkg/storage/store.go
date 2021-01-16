@@ -7,10 +7,9 @@ type Store interface {
 	Delete(key string) error
 }
 
-func NewStore() (*MemTable, error) {
-	tempFilePath := "temp/temp.db"
-
-	commitLog, err := NewCommitLog(tempFilePath)
+// Initializes a Store with the db stored at `filepath`
+func NewStore(filepath string) (*MemTable, error) {
+	commitLog, err := NewCommitLog(filepath)
 	if err != nil {
 		return nil, err
 	}

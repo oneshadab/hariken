@@ -25,7 +25,9 @@ func NewServer(connString string) (*Server, error) {
 	}
 
 	// Todo: read from disk instead of creating new store each time
-	server.Store, err = storage.NewStore()
+	tempFilePath := "temp/temp.db"
+
+	server.Store, err = storage.NewStore(tempFilePath)
 	if err != nil {
 		return nil, err
 	}
