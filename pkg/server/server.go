@@ -41,11 +41,11 @@ func (server *Server) WaitForConnections() {
 			continue
 		}
 
-		go server.handleConnection(conn)
+		go server.startSession(conn)
 	}
 }
 
-func (server *Server) handleConnection(conn net.Conn) {
+func (server *Server) startSession(conn net.Conn) {
 	defer conn.Close()
 
 	socketReader := bufio.NewReader(conn)
