@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 type CommitLog struct {
@@ -17,12 +18,13 @@ type LogEntry struct {
 	IsDeleted bool
 }
 
-func NewCommitLog(filePath string) (*CommitLog, error) {
+func NewCommitLog(path string) (*CommitLog, error) {
 	var err error
 
 	commitLog := CommitLog{}
 
-	commitLog.logFile, err = os.OpenFile(filePath, os.O_CREATE|os.O_RDWR, 0644)
+	os.MkdirAll(filepath.Dir(path), os.ModePerm)
+	commitLog.logFile, err = os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return nil, err
 	}

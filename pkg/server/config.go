@@ -13,7 +13,7 @@ type Config struct {
 }
 
 func (c *Config) StorePath(storeName string) string {
-	return filepath.Join(c.StorageRoot, storeName)
+	return filepath.Join(c.StorageRoot, "store", storeName)
 }
 
 func (c *Config) Validate() error {
