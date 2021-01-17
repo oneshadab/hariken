@@ -38,13 +38,7 @@ func (S *Session) Start() error {
 			return err
 		}
 
-		query = strings.TrimSuffix(query, "\n")
-		parts := strings.Split(query, " ")
-
-		cmd := parts[0]
-		args := parts[1:]
-
-		result, err := S.Exec(cmd, args)
+		result, err := S.Exec(query)
 		if err != nil {
 			return err
 		}
@@ -61,10 +55,15 @@ func (S *Session) Start() error {
 	}
 }
 
-func (S *Session) Exec(cmd string, args []string) (string, error) {
-	CMD := strings.ToUpper(cmd)
+func (S *Session) Exec(query string) (string, error) {
+	query = strings.TrimSuffix(query, "\n")
+	parts := strings.Split(query, " ")
 
-	switch CMD {
+	cmd := parts[0]
+	args := parts[1:]
+
+	cmd = strings.ToUpper(cmd)
+	switch cmd {
 	case "GET":
 		val, err := S.store.Get(args[0])
 
