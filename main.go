@@ -36,7 +36,7 @@ func connect() {
 	if err != nil {
 		panic(err)
 	}
-	client.Shell()
+	client.StartShell()
 }
 
 func startServer() {
