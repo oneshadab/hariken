@@ -60,7 +60,7 @@ func (C *Client) Process(reader io.Reader, writer io.Writer) (bool, error) {
 
 	msg, err := bufferedReader.ReadString('\n')
 	if err != nil {
-		return false, fmt.Errorf("Failed to read string from stdin")
+		return false, fmt.Errorf("Failed to read string from reader: %s", err)
 	}
 
 	if len(strings.TrimSpace(msg)) == 0 {
@@ -70,7 +70,7 @@ func (C *Client) Process(reader io.Reader, writer io.Writer) (bool, error) {
 
 	_, err = C.writer.WriteString(msg)
 	if err != nil {
-		return false, fmt.Errorf("Failed to write message to server")
+		return false, fmt.Errorf("Failed to write message to server: %s", err)
 	}
 
 	err = C.writer.Flush()
