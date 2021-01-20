@@ -1,6 +1,7 @@
 # Hariken
 
 ## Install
+Use the following guide to install Go - https://golang.org/doc/install
 
 ```
 git clone git@github.com:oneshadab/hariken.git
