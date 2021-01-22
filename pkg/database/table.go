@@ -63,6 +63,29 @@ func (T *Table) Insert(data map[string]string) (*Row, error) {
 	return row, nil
 }
 
+func (T *Table) Update(rowId string, data map[string]string) (*Row, error) {
+	row, err := T.Get(rowId)
+	if err != nil {
+		return nil, err
+	}
+
+	for k, v := range data {
+		row.Column[k] = v
+	}
+
+	rowData, err := row.Serialize()
+	if err != nil {
+		return nil, err
+	}
+
+	err = T.store.Set(row.Id(), *rowData)
+	if err != nil {
+		return nil, err
+	}
+
+	return row, nil
+}
+
 func (T *Table) Delete(rowId string) error {
 	rowExists, err := T.store.Has(rowId)
 	if err != nil {

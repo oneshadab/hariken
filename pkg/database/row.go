@@ -15,11 +15,11 @@ func NewRow() *Row {
 }
 
 func (r *Row) Id() string {
-	return r.Column["Id"]
+	return r.Column["id"]
 }
 
 func (r *Row) setId(Id string) {
-	r.Column["Id"] = Id
+	r.Column["id"] = Id
 }
 
 // Todo: Replace `json` with custom serialize/deserialize
