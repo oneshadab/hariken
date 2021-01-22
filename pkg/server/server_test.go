@@ -10,18 +10,26 @@ import (
 func TestServer(t *testing.T) {
 	tData := []struct {
 		databaseName string
-		key          string
-		value        string
+		tableName    string
+
+		id   string
+		name string
+		age  string
 	}{
 		{
 			databaseName: "default",
-			key:          "name",
-			value:        "john",
+			tableName:    "users",
+
+			id:   "0",
+			name: "john",
+			age:  "32",
 		},
 		{
 			databaseName: "test",
-			key:          "name",
-			value:        "jack",
+			tableName:    "users",
+
+			id:   "0",
+			name: "jack",
 		},
 	}
 
@@ -30,47 +38,47 @@ func TestServer(t *testing.T) {
 		expectedResult string
 	}{
 		{
-			command:        fmt.Sprintf("GET %s", tData[0].key),
+			command:        fmt.Sprintf("GET %s %s", tData[0].tableName, tData[0].id),
 			expectedResult: "nil",
 		},
 		{
-			command:        fmt.Sprintf("SET %s %s", tData[0].key, tData[0].value),
-			expectedResult: "OK",
+			command:        fmt.Sprintf("UPSERT %s name=%s", tData[0].tableName, tData[0].name),
+			expectedResult: `{"Column":{"id":"0","name":"john"}}`,
 		},
 		{
-			command:        fmt.Sprintf("HAS %s", tData[0].key),
-			expectedResult: "True",
+			command:        fmt.Sprintf("GET %s %s", tData[0].tableName, tData[0].id),
+			expectedResult: `{"Column":{"id":"0","name":"john"}}`,
 		},
 		{
-			command:        fmt.Sprintf("GET %s", tData[0].key),
-			expectedResult: `"john"`,
+			command:        fmt.Sprintf("UPSERT %s id=%s age=%s", tData[0].tableName, tData[0].id, tData[0].age),
+			expectedResult: `{"Column":{"age":"32","id":"0","name":"john"}}`,
+		},
+		{
+			command:        fmt.Sprintf("GET %s %s", tData[0].tableName, tData[0].id),
+			expectedResult: `{"Column":{"age":"32","id":"0","name":"john"}}`,
 		},
 		{
 			command:        fmt.Sprintf("USE %s", tData[1].databaseName),
 			expectedResult: "OK",
 		},
 		{
-			command:        fmt.Sprintf("HAS %s", tData[0].key),
-			expectedResult: "False",
+			command:        fmt.Sprintf("GET %s %s", tData[1].tableName, tData[0].id),
+			expectedResult: "nil",
 		},
 		{
-			command:        fmt.Sprintf("HAS %s", tData[1].key),
-			expectedResult: "False",
+			command:        fmt.Sprintf("Upsert %s name=%s", tData[1].tableName, tData[1].name),
+			expectedResult: `{"Column":{"id":"0","name":"jack"}}`,
 		},
 		{
-			command:        fmt.Sprintf("SET %s %s", tData[1].key, tData[1].value),
+			command:        fmt.Sprintf("GET %s %s", tData[1].tableName, tData[1].id),
+			expectedResult: `{"Column":{"id":"0","name":"jack"}}`,
+		},
+		{
+			command:        fmt.Sprintf("DELETE %s %s", tData[1].tableName, tData[1].id),
 			expectedResult: "OK",
 		},
 		{
-			command:        fmt.Sprintf("GET %s", tData[1].key),
-			expectedResult: `"jack"`,
-		},
-		{
-			command:        fmt.Sprintf("DELETE %s", tData[1].key),
-			expectedResult: "OK",
-		},
-		{
-			command:        fmt.Sprintf("GET %s", tData[1].key),
+			command:        fmt.Sprintf("GET %s %s", tData[1].tableName, tData[1].id),
 			expectedResult: "nil",
 		},
 		{
