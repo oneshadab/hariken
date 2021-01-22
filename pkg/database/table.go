@@ -69,6 +69,10 @@ func (T *Table) Update(rowId string, data map[string]string) (*Row, error) {
 		return nil, err
 	}
 
+	if row == nil {
+		return nil, fmt.Errorf("Row with id `%v` not found", rowId)
+	}
+
 	for k, v := range data {
 		row.Column[k] = v
 	}

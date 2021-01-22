@@ -16,10 +16,10 @@ func TestPersistence(t *testing.T) {
 	}
 	defer testFile.Close()
 
-	databaseFilePath := testFile.Name()
+	storeFilePath := testFile.Name()
 
-	// Part 1: Database the value using a database
-	store1, err := NewStore(databaseFilePath)
+	// Part 1: store the value using a store
+	store1, err := NewStore(storeFilePath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -37,8 +37,8 @@ func TestPersistence(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Part 2: Try to read the value from another database
-	store2, err := NewStore(databaseFilePath)
+	// Part 2: Try to read the value from another store
+	store2, err := NewStore(storeFilePath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +48,7 @@ func TestPersistence(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// 2nd database should read the same value databased by database
+	// 2nd store should read the same value stored by store
 	if testData.value != *value {
 		t.Fatalf("Exptected %v got %v", testData.value, value)
 	}
@@ -56,8 +56,8 @@ func TestPersistence(t *testing.T) {
 	// Part 3: We delete the key and try to read it again
 	store2.Delete(testData.key)
 
-	// Open another database at the same location
-	store3, err := NewStore(databaseFilePath)
+	// Open another store at the same location
+	store3, err := NewStore(storeFilePath)
 	if err != nil {
 		t.Fatal(err)
 	}

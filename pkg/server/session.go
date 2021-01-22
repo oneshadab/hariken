@@ -92,7 +92,7 @@ func (S *Session) Exec(query string) (string, error) {
 			return "", err
 		}
 
-		return fmt.Sprintf("\"%s\"", *val), nil
+		return *val, nil
 
 	case "UPSERT":
 		tableName := args[0]
@@ -117,7 +117,7 @@ func (S *Session) Exec(query string) (string, error) {
 			return "", err
 		}
 
-		return fmt.Sprintf("\"%s\"", *val), nil
+		return *val, nil
 
 	case "DELETE":
 		tableName := args[0]
