@@ -1,6 +1,6 @@
 package database
 
-// Todo: Add type for QueryResult/return cursor
+// Todo: Add type for QueryResult and return cursor
 type QueryResult [](*Row)
 
 type Query struct {
@@ -31,14 +31,20 @@ func (q *Query) Get(rowId string) *Query {
 	return q
 }
 
-func (q *Query) Insert(data map[string]string) *Query {
+func (q *Query) Upsert(data map[string]string) *Query {
 	if q.Err != nil {
 		return q
 	}
 
 	var row *Row
 
-	row, q.Err = q.table.Insert(data)
+	rowId, rowIdExists := data["id"]
+	if rowIdExists {
+		row, q.Err = q.table.Update(rowId, data)
+	} else {
+		row, q.Err = q.table.Insert(data)
+	}
+
 	if q.Err != nil {
 		return q
 	}
