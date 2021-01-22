@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/oneshadab/hariken/pkg/storage"
+	"github.com/oneshadab/hariken/pkg/database"
 )
 
 type Session struct {
 	config *Config
 
-	db     storage.Database
+	db     database.Database
 	reader bufio.Reader
 	writer bufio.Writer
 }
@@ -64,9 +64,20 @@ func (S *Session) Exec(query string) (string, error) {
 
 	cmd = strings.ToUpper(cmd)
 	switch cmd {
-	case "GET":
-		val, err := S.db.Get(args[0])
+	case "USE":
+		dbName := args[0]
 
+		err := S.useDatabase(dbName)
+		if err != nil {
+			return "", err
+		}
+		return "OK", nil
+
+	case "GET":
+		tableName := args[0]
+		rowId := args[1]
+
+		rows, err := S.db.Query(tableName).Get(database.RowId(rowId)).Exec()
 		if err != nil {
 			return "", err
 		}
