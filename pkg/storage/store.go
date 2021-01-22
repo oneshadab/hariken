@@ -1,0 +1,87 @@
+package storage
+
+type Store struct {
+	memTable  *MemTable
+	commitLog *CommitLog
+}
+
+// Initializes a Store with the db stored at `filepath`
+func NewStore(filepath string) (*Store, error) {
+	var err error
+	store := &Store{}
+
+	store.commitLog, err = NewCommitLog(filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	store.memTable, err = NewMemTable()
+	if err != nil {
+		return nil, err
+	}
+
+	err = store.loadFromLog()
+	if err != nil {
+		return nil, err
+	}
+
+	return store, nil
+}
+
+func (S *Store) Has(key string) (bool, error) {
+	return S.memTable.Has(key)
+}
+
+func (S *Store) Get(key string) (*string, error) {
+	return S.memTable.Get(key)
+}
+
+func (S *Store) Set(key string, val string) error {
+	err := S.commitLog.Write(LogEntry{
+		Key: key,
+		Val: val,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	S.memTable.Set(key, val)
+	return nil
+}
+
+func (S *Store) Delete(key string) error {
+	err := S.commitLog.Write(LogEntry{
+		Key:       key,
+		IsDeleted: true,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	S.memTable.Delete(key)
+	return nil
+}
+
+func (S *Store) loadFromLog() error {
+	for {
+		entry, err := S.commitLog.Read()
+
+		if err != nil {
+			return err
+		}
+
+		if entry == nil {
+			break
+		}
+
+		if entry.IsDeleted {
+			S.memTable.Delete(entry.Key)
+		} else {
+			S.memTable.Set(entry.Key, entry.Val)
+		}
+	}
+
+	return nil
+}
