@@ -11,7 +11,7 @@ import (
 type Session struct {
 	config *Config
 
-	db     database.Database
+	db     *database.Database
 	reader bufio.Reader
 	writer bufio.Writer
 }
@@ -112,7 +112,13 @@ func (S *Session) Exec(query string) (string, error) {
 		return fmt.Sprintf("\"%s\"", val), nil
 
 	case "DELETE":
-		err := S.db.Delete(args[0])
+		tableName := args[0]
+		rowId := args[1]
+
+		id := database.RowId(rowId)
+		row := &database.Row{Id: &id}
+
+		_, err := S.db.Query(tableName).Delete(row).Exec()
 
 		if err != nil {
 			return "", err

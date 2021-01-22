@@ -45,6 +45,19 @@ func (q *Query) Upsert(row *Row) *Query {
 	return q
 }
 
+func (q *Query) Delete(row *Row) *Query {
+	if q.Err != nil {
+		return q
+	}
+
+	q.Err = q.table.Delete(row)
+	if q.Err != nil {
+		return q
+	}
+
+	return q
+}
+
 func (q *Query) Exec() (QueryResult, error) {
 	return q.Result, q.Err
 }

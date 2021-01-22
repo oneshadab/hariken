@@ -59,7 +59,7 @@ func (T *Table) Upsert(row *Row) error {
 	return nil
 }
 
-func (T *Table) Remove(row *Row) error {
+func (T *Table) Delete(row *Row) error {
 	rowExists, err := T.store.Has(string(*row.Id))
 	if err != nil {
 		return err
