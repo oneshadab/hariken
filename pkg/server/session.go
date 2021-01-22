@@ -77,7 +77,7 @@ func (S *Session) Exec(query string) (string, error) {
 		tableName := args[0]
 		rowId := args[1]
 
-		rows, err := S.db.Query(tableName).Get(database.RowId(rowId)).Exec()
+		rows, err := S.db.Query(tableName).Get(rowId).Exec()
 		if err != nil {
 			return "", err
 		}
@@ -94,18 +94,24 @@ func (S *Session) Exec(query string) (string, error) {
 
 		return fmt.Sprintf("\"%s\"", *val), nil
 
-	case "UPSERT":
+	case "INSERT":
 		tableName := args[0]
-		rowData := args[1]
 
-		row := database.NewRow()
-		row.Deserialize(&rowData)
+		data := make(map[string]string)
+		for _, entry := range args[1:] {
+			parts := strings.Split(entry, "=")
+			key := parts[0]
+			val := parts[1]
 
-		_, err := S.db.Query(tableName).Upsert(row).Exec()
+			data[key] = val
+		}
+
+		rows, err := S.db.Query(tableName).Insert(data).Exec()
 		if err != nil {
 			return "", err
 		}
 
+		row := rows[0]
 		val, err := row.Serialize()
 		if err != nil {
 			return "", err
@@ -117,12 +123,7 @@ func (S *Session) Exec(query string) (string, error) {
 		tableName := args[0]
 		rowId := args[1]
 
-		id := database.RowId(rowId)
-
-		row := database.NewRow()
-		row.Id = &id
-
-		_, err := S.db.Query(tableName).Delete(row).Exec()
+		_, err := S.db.Query(tableName).Delete(rowId).Exec()
 
 		if err != nil {
 			return "", err
