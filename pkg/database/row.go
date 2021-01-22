@@ -11,6 +11,12 @@ type Row struct {
 	Column map[string]string
 }
 
+func NewRow() *Row {
+	return &Row{
+		Column: make(map[string]string),
+	}
+}
+
 // Todo: Replace `json` with custom serialize/deserialize
 func (r *Row) Deserialize(data *string) error {
 	err := json.Unmarshal([]byte(*data), r)

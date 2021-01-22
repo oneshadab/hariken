@@ -11,6 +11,7 @@ type Database struct {
 func LoadDatabase(dbDir string) (*Database, error) {
 	db := Database{
 		storageLocation: dbDir,
+		tableCache:      make(map[string](*Table)),
 	}
 	return &db, nil
 }
