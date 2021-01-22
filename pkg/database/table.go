@@ -25,7 +25,7 @@ func LoadTable(filepath string) (*Table, error) {
 	return table, nil
 }
 
-func (T *Table) Get(rowId RowId) (*Row, error) {
+func (T *Table) Get(rowId string) (*Row, error) {
 	rowData, err := T.store.Get(string(rowId))
 	if err != nil {
 		return nil, err
@@ -43,36 +43,37 @@ func (T *Table) Get(rowId RowId) (*Row, error) {
 	return row, nil
 }
 
-func (T *Table) Upsert(row *Row) error {
-	if row.Id == nil {
-		// Ensure row.Id exists
-		row.Id = T.NextId()
+func (T *Table) Insert(data map[string]string) (*Row, error) {
+	row := NewRow()
+	for k, v := range data {
+		row.Column[k] = v
 	}
+	row.setId(T.NextId())
 
 	rowData, err := row.Serialize()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	err = T.store.Set(string(*row.Id), *rowData)
+	err = T.store.Set(row.Id(), *rowData)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return row, nil
 }
 
-func (T *Table) Delete(row *Row) error {
-	rowExists, err := T.store.Has(string(*row.Id))
+func (T *Table) Delete(rowId string) error {
+	rowExists, err := T.store.Has(rowId)
 	if err != nil {
 		return err
 	}
 
 	if !rowExists {
-		return fmt.Errorf("Row with id `%v` not found", row.Id)
+		return fmt.Errorf("Row with id `%v` not found", rowId)
 	}
 
-	err = T.store.Delete(string(*row.Id))
+	err = T.store.Delete(rowId)
 	if err != nil {
 		return err
 	}
@@ -80,8 +81,8 @@ func (T *Table) Delete(row *Row) error {
 	return nil
 }
 
-func (T *Table) NextId() *RowId {
-	id := RowId(strconv.Itoa(T.lastUsedId))
+func (T *Table) NextId() string {
+	id := strconv.Itoa(T.lastUsedId)
 	T.lastUsedId++
-	return &id
+	return id
 }

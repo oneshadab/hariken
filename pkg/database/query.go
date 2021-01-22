@@ -16,7 +16,7 @@ func NewQuery(db *Database, tableName string) *Query {
 	return query
 }
 
-func (q *Query) Get(rowId RowId) *Query {
+func (q *Query) Get(rowId string) *Query {
 	if q.Err != nil {
 		return q
 	}
@@ -31,12 +31,14 @@ func (q *Query) Get(rowId RowId) *Query {
 	return q
 }
 
-func (q *Query) Upsert(row *Row) *Query {
+func (q *Query) Insert(data map[string]string) *Query {
 	if q.Err != nil {
 		return q
 	}
 
-	q.Err = q.table.Upsert(row)
+	var row *Row
+
+	row, q.Err = q.table.Insert(data)
 	if q.Err != nil {
 		return q
 	}
@@ -45,12 +47,12 @@ func (q *Query) Upsert(row *Row) *Query {
 	return q
 }
 
-func (q *Query) Delete(row *Row) *Query {
+func (q *Query) Delete(rowId string) *Query {
 	if q.Err != nil {
 		return q
 	}
 
-	q.Err = q.table.Delete(row)
+	q.Err = q.table.Delete(rowId)
 	if q.Err != nil {
 		return q
 	}

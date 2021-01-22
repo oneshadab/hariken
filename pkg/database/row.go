@@ -4,10 +4,7 @@ import (
 	"encoding/json"
 )
 
-type RowId string
-
 type Row struct {
-	Id     *RowId
 	Column map[string]string
 }
 
@@ -15,6 +12,14 @@ func NewRow() *Row {
 	return &Row{
 		Column: make(map[string]string),
 	}
+}
+
+func (r *Row) Id() string {
+	return r.Column["Id"]
+}
+
+func (r *Row) setId(Id string) {
+	r.Column["Id"] = Id
 }
 
 // Todo: Replace `json` with custom serialize/deserialize
