@@ -9,19 +9,19 @@ import (
 
 func TestServer(t *testing.T) {
 	tData := []struct {
-		storeName string
-		key       string
-		value     string
+		databaseName string
+		key          string
+		value        string
 	}{
 		{
-			storeName: "default",
-			key:       "name",
-			value:     "john",
+			databaseName: "default",
+			key:          "name",
+			value:        "john",
 		},
 		{
-			storeName: "test",
-			key:       "name",
-			value:     "jack",
+			databaseName: "test",
+			key:          "name",
+			value:        "jack",
 		},
 	}
 
@@ -46,7 +46,7 @@ func TestServer(t *testing.T) {
 			expectedResult: `"john"`,
 		},
 		{
-			command:        fmt.Sprintf("USE %s", tData[1].storeName),
+			command:        fmt.Sprintf("USE %s", tData[1].databaseName),
 			expectedResult: "OK",
 		},
 		{
@@ -84,9 +84,9 @@ func TestServer(t *testing.T) {
 	}
 
 	config := &Config{
-		ConnString:       "localhost:4252",
-		StorageRoot:      t.TempDir(),
-		DefaultStoreName: "default",
+		ConnString:          "localhost:4252",
+		StorageRoot:         t.TempDir(),
+		DefaultDatabaseName: "default",
 	}
 
 	server, err := NewServer(config)

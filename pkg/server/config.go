@@ -9,11 +9,11 @@ type Config struct {
 	ConnString  string
 	StorageRoot string
 
-	DefaultStoreName string // The default store to use when a session is started
+	DefaultDatabaseName string // The default database to use when a session is started
 }
 
-func (c *Config) StorePath(storeName string) string {
-	return filepath.Join(c.StorageRoot, "store", storeName)
+func (c *Config) DatabasePath(databaseName string) string {
+	return filepath.Join(c.StorageRoot, "database", databaseName)
 }
 
 func (c *Config) Validate() error {
@@ -23,8 +23,8 @@ func (c *Config) Validate() error {
 	if c.StorageRoot == "" {
 		return fmt.Errorf("StorageRoot not specified")
 	}
-	if c.DefaultStoreName == "" {
-		return fmt.Errorf("DefaultStoreName not specified")
+	if c.DefaultDatabaseName == "" {
+		return fmt.Errorf("DefaultDatabaseName not specified")
 	}
 	return nil
 }

@@ -11,7 +11,7 @@ import (
 type Session struct {
 	config *Config
 
-	store  storage.Store
+	db     storage.Database
 	reader bufio.Reader
 	writer bufio.Writer
 }
@@ -23,7 +23,7 @@ func NewSession(connReader *bufio.Reader, connWriter *bufio.Writer, config *Conf
 		writer: *connWriter,
 	}
 
-	err := session.loadStore(config.DefaultStoreName)
+	err := session.useDatabase(config.DefaultDatabaseName)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (S *Session) Exec(query string) (string, error) {
 	cmd = strings.ToUpper(cmd)
 	switch cmd {
 	case "GET":
-		val, err := S.store.Get(args[0])
+		val, err := S.db.Get(args[0])
 
 		if err != nil {
 			return "", err
@@ -81,7 +81,7 @@ func (S *Session) Exec(query string) (string, error) {
 		key := args[0]
 		val := args[1]
 
-		err := S.store.Set(key, val)
+		err := S.db.Set(key, val)
 		if err != nil {
 			return "", err
 		}
@@ -89,7 +89,7 @@ func (S *Session) Exec(query string) (string, error) {
 		return "OK", nil
 
 	case "HAS":
-		hasKey, err := S.store.Has(args[0])
+		hasKey, err := S.db.Has(args[0])
 
 		if err != nil {
 			return "", err
@@ -102,7 +102,7 @@ func (S *Session) Exec(query string) (string, error) {
 		}
 
 	case "DELETE":
-		err := S.store.Delete(args[0])
+		err := S.db.Delete(args[0])
 
 		if err != nil {
 			return "", err
@@ -111,7 +111,7 @@ func (S *Session) Exec(query string) (string, error) {
 		return "OK", nil
 
 	case "USE":
-		err := S.loadStore(args[0])
+		err := S.useDatabase(args[0])
 		if err != nil {
 			return "", err
 		}
@@ -125,13 +125,13 @@ func (S *Session) Exec(query string) (string, error) {
 	}
 }
 
-func (S *Session) loadStore(storeName string) error {
-	store, err := storage.NewStore(S.config.StorePath(storeName))
+func (S *Session) useDatabase(dbName string) error {
+	db, err := storage.LoadDatabase(S.config.DatabasePath(dbName))
 	if err != nil {
 		return err
 	}
 
-	S.store = store
+	S.db = db
 
 	return nil
 }
