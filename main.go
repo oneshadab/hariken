@@ -58,7 +58,7 @@ func startServerAsync() {
 func serverConfig() *server.Config {
 	return &server.Config{
 		ConnString:          connString,
-		StorageRoot:         "temp/db",
+		StorageRoot:         "temp",
 		DefaultDatabaseName: "default",
 	}
 }
