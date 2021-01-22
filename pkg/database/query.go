@@ -1,11 +1,11 @@
 package database
 
-// Todo: Add type for QueryResult
+// Todo: Add type for QueryResult/return cursor
 type QueryResult [](*Row)
 
 type Query struct {
 	Result QueryResult
-	Err    error
+	Err    error // Query will fall-through on error
 
 	table *Table
 }
@@ -23,6 +23,20 @@ func (q *Query) Get(rowId RowId) *Query {
 
 	var row *Row
 	row, q.Err = q.table.Get(rowId)
+	if q.Err != nil {
+		return q
+	}
+
+	q.Result = QueryResult{row}
+	return q
+}
+
+func (q *Query) Upsert(row *Row) *Query {
+	if q.Err != nil {
+		return q
+	}
+
+	q.Err = q.table.Upsert(row)
 	if q.Err != nil {
 		return q
 	}

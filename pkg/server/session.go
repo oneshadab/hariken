@@ -81,36 +81,35 @@ func (S *Session) Exec(query string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-
-		if val == nil {
-			return "nil", err
+		if len(rows) == 0 {
+			return "nil", nil
 		}
 
-		return fmt.Sprintf("\"%s\"", *val), nil
-
-	case "SET":
-		key := args[0]
-		val := args[1]
-
-		err := S.db.Set(key, val)
+		val, err := rows[0].Serialize()
 		if err != nil {
 			return "", err
 		}
 
-		return "OK", nil
+		return fmt.Sprintf("\"%s\"", val), nil
 
-	case "HAS":
-		hasKey, err := S.db.Has(args[0])
+	case "UPSERT":
+		tableName := args[0]
+		rowData := args[1]
 
+		row := &database.Row{}
+		row.Deserialize(&rowData)
+
+		_, err := S.db.Query(tableName).Upsert(row).Exec()
 		if err != nil {
 			return "", err
 		}
 
-		if hasKey {
-			return "True", nil
-		} else {
-			return "False", nil
+		val, err := row.Serialize()
+		if err != nil {
+			return "", err
 		}
+
+		return fmt.Sprintf("\"%s\"", val), nil
 
 	case "DELETE":
 		err := S.db.Delete(args[0])
@@ -119,13 +118,6 @@ func (S *Session) Exec(query string) (string, error) {
 			return "", err
 		}
 
-		return "OK", nil
-
-	case "USE":
-		err := S.useDatabase(args[0])
-		if err != nil {
-			return "", err
-		}
 		return "OK", nil
 
 	case "EXIT":
@@ -137,7 +129,7 @@ func (S *Session) Exec(query string) (string, error) {
 }
 
 func (S *Session) useDatabase(dbName string) error {
-	db, err := storage.LoadDatabase(S.config.DatabasePath(dbName))
+	db, err := database.LoadDatabase(S.config.DatabasePath(dbName))
 	if err != nil {
 		return err
 	}
