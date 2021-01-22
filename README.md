@@ -22,5 +22,6 @@ Valid values for `command`:
 
 ### Tests
 ```
-go test -v ./... -cover
+go test -v -coverpkg=./... -coverprofile=profile.cov ./...
+go tool cover -func profile.cov
 ```

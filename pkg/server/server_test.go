@@ -92,7 +92,7 @@ func TestServer(t *testing.T) {
 	}
 
 	config := &Config{
-		ConnString:          "localhost:4252",
+		ConnString:          "localhost:4253",
 		StorageRoot:         t.TempDir(),
 		DefaultDatabaseName: "default",
 	}
