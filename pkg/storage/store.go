@@ -1,11 +1,11 @@
 package storage
 
+// A Generic Persistent Key-Value store
 type Store struct {
 	memTable  *MemTable
 	commitLog *CommitLog
 }
 
-// Initializes a Store with the db stored at `filepath`
 func NewStore(filepath string) (*Store, error) {
 	var err error
 	store := &Store{}
