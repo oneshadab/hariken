@@ -94,7 +94,7 @@ func (S *Session) Exec(query string) (string, error) {
 
 		return fmt.Sprintf("\"%s\"", *val), nil
 
-	case "INSERT":
+	case "UPSERT":
 		tableName := args[0]
 
 		data := make(map[string]string)
@@ -106,7 +106,7 @@ func (S *Session) Exec(query string) (string, error) {
 			data[key] = val
 		}
 
-		rows, err := S.db.Query(tableName).Insert(data).Exec()
+		rows, err := S.db.Query(tableName).Upsert(data).Exec()
 		if err != nil {
 			return "", err
 		}
