@@ -16,10 +16,10 @@ func TestPersistence(t *testing.T) {
 	}
 	defer testFile.Close()
 
-	storeFilePath := testFile.Name()
+	databaseFilePath := testFile.Name()
 
-	// Part 1: Store the value using a store
-	store1, err := NewStore(storeFilePath)
+	// Part 1: Database the value using a database
+	database1, err := LoadDatabase(databaseFilePath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,37 +32,37 @@ func TestPersistence(t *testing.T) {
 		value: "john",
 	}
 
-	err = store1.Set(testData.key, testData.value)
+	err = database1.Set(testData.key, testData.value)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Part 2: Try to read the value from another store
-	store2, err := NewStore(storeFilePath)
+	// Part 2: Try to read the value from another database
+	database2, err := LoadDatabase(databaseFilePath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	value, err := store2.Get(testData.key)
+	value, err := database2.Get(testData.key)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// 2nd store should read the same value stored by store
+	// 2nd database should read the same value databased by database
 	if testData.value != *value {
 		t.Fatalf("Exptected %v got %v", testData.value, value)
 	}
 
 	// Part 3: We delete the key and try to read it again
-	store2.Delete(testData.key)
+	database2.Delete(testData.key)
 
-	// Open another store at the same location
-	store3, err := NewStore(storeFilePath)
+	// Open another database at the same location
+	database3, err := LoadDatabase(databaseFilePath)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	hasValue, err := store3.Has(testData.key)
+	hasValue, err := database3.Has(testData.key)
 	if err != nil {
 		t.Fatal(err)
 	}
