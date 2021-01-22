@@ -32,3 +32,7 @@ func (db *Database) Table(tableName string) (*Table, error) {
 
 	return table, nil
 }
+
+func (db *Database) Query(tableName string) *Query {
+	return NewQuery(db, tableName)
+}
