@@ -30,8 +30,11 @@ func (T *Table) Get(rowId RowId) (*Row, error) {
 	if err != nil {
 		return nil, err
 	}
+	if rowData == nil {
+		return nil, nil
+	}
 
-	row := &Row{}
+	row := NewRow()
 	err = row.Deserialize(rowData)
 	if err != nil {
 		return nil, err

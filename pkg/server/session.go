@@ -81,22 +81,24 @@ func (S *Session) Exec(query string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		if len(rows) == 0 {
+
+		row := rows[0]
+		if row == nil {
 			return "nil", nil
 		}
 
-		val, err := rows[0].Serialize()
+		val, err := row.Serialize()
 		if err != nil {
 			return "", err
 		}
 
-		return fmt.Sprintf("\"%s\"", val), nil
+		return fmt.Sprintf("\"%s\"", *val), nil
 
 	case "UPSERT":
 		tableName := args[0]
 		rowData := args[1]
 
-		row := &database.Row{}
+		row := database.NewRow()
 		row.Deserialize(&rowData)
 
 		_, err := S.db.Query(tableName).Upsert(row).Exec()
@@ -109,14 +111,16 @@ func (S *Session) Exec(query string) (string, error) {
 			return "", err
 		}
 
-		return fmt.Sprintf("\"%s\"", val), nil
+		return fmt.Sprintf("\"%s\"", *val), nil
 
 	case "DELETE":
 		tableName := args[0]
 		rowId := args[1]
 
 		id := database.RowId(rowId)
-		row := &database.Row{Id: &id}
+
+		row := database.NewRow()
+		row.Id = &id
 
 		_, err := S.db.Query(tableName).Delete(row).Exec()
 
