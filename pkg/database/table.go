@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/oneshadab/hariken/pkg/storage"
 )
@@ -53,6 +54,7 @@ func (T *Table) Insert(entries map[string]string) (*Row, error) {
 	row := NewRow()
 	for k, v := range entries {
 		row.Column[k] = v
+		T.AddColumn(k)
 	}
 
 	rowId, err := T.NextId()
@@ -86,6 +88,7 @@ func (T *Table) Update(rowId string, entries map[string]string) (*Row, error) {
 
 	for k, v := range entries {
 		row.Column[k] = v
+		T.AddColumn(k)
 	}
 
 	rowData, err := row.Serialize()
@@ -119,10 +122,52 @@ func (T *Table) Delete(rowId string) error {
 	return nil
 }
 
-func (T *Table) NextId() (string, error) {
-	const primaryKey = "lastUsedId" // Todo: move to constant
+func (T *Table) Columns() ([]string, error) {
+	const columnListKey = "columnNames" // Todo: move to constant
 
-	idStr, err := T.metaDataStore.Get(primaryKey)
+	colStr, err := T.metaDataStore.Get(columnListKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if colStr == nil {
+		tmp := "id" // Always make sure that Id exists
+		colStr = &tmp
+	}
+
+	return strings.Split(*colStr, ","), nil
+}
+
+func (T *Table) AddColumn(colName string) error {
+	const columnListKey = "columnNames" // Todo: move to constant
+
+	cols, err := T.Columns()
+	if err != nil {
+		return err
+	}
+
+	// Todo: Replace with set
+	for _, col := range cols {
+		if col == colName {
+			// Column already exists to skip insertion
+			return nil
+		}
+	}
+
+	cols = append(cols, colName)
+
+	err = T.metaDataStore.Set(columnListKey, strings.Join(cols, ","))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (T *Table) NextId() (string, error) {
+	const lastUsedIdKey = "lastUsedId" // Todo: move to constant
+
+	idStr, err := T.metaDataStore.Get(lastUsedIdKey)
 	if err != nil {
 		return "", err
 	}
@@ -142,7 +187,7 @@ func (T *Table) NextId() (string, error) {
 	lastUsedId++
 
 	newIdStr := strconv.Itoa(lastUsedId)
-	err = T.metaDataStore.Set(primaryKey, newIdStr)
+	err = T.metaDataStore.Set(lastUsedIdKey, newIdStr)
 	if err != nil {
 		return "", nil
 	}
