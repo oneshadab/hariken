@@ -2,9 +2,11 @@ package server
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"strings"
 
+	"github.com/olekukonko/tablewriter"
 	"github.com/oneshadab/hariken/pkg/database"
 	"github.com/oneshadab/hariken/pkg/protocol"
 )
@@ -76,9 +78,13 @@ func (S *Session) Exec(query string) (string, error) {
 		tx := S.db.NewTransaction()
 		tx.UseTable(tableName)
 		tx.FetchRow(rowId)
-
 		if tx.Err != nil {
 			return "", tx.Err
+		}
+
+		headers, err := tx.Table.Columns()
+		if err != nil {
+			return "", err
 		}
 
 		row := tx.Result[0]
@@ -86,12 +92,8 @@ func (S *Session) Exec(query string) (string, error) {
 			return "nil", nil
 		}
 
-		val, err := row.Serialize()
-		if err != nil {
-			return "", err
-		}
-
-		return *val, nil
+		output := generateTable(headers, []map[string]string{row.Column})
+		return output, nil
 
 	case "UPSERT":
 		tableName := args[0]
@@ -113,13 +115,14 @@ func (S *Session) Exec(query string) (string, error) {
 			return "", tx.Err
 		}
 
-		row := tx.Result[0]
-		val, err := row.Serialize()
+		headers, err := tx.Table.Columns()
 		if err != nil {
 			return "", err
 		}
+		row := tx.Result[0]
 
-		return *val, nil
+		output := generateTable(headers, []map[string]string{row.Column})
+		return output, nil
 
 	case "DELETE":
 		tableName := args[0]
@@ -152,4 +155,22 @@ func (S *Session) useDatabase(dbName string) error {
 	S.db = db
 
 	return nil
+}
+
+func generateTable(headers []string, entries []map[string]string) string {
+	buf := new(bytes.Buffer)
+
+	table := tablewriter.NewWriter(buf)
+	table.SetHeader(headers)
+
+	for _, entry := range entries {
+		vals := make([]string, 0, len(entry))
+		for _, header := range headers {
+			vals = append(vals, entry[header])
+		}
+		table.Append(vals)
+	}
+	table.Render()
+
+	return buf.String()
 }
