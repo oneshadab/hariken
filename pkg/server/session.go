@@ -77,12 +77,15 @@ func (S *Session) Exec(query string) (string, error) {
 		tableName := args[0]
 		rowId := args[1]
 
-		rows, err := S.db.Query(tableName).Get(rowId).Exec()
-		if err != nil {
-			return "", err
+		tx := S.db.NewTransaction()
+		tx.UseTable(tableName)
+		tx.FetchRow(rowId)
+
+		if tx.Err != nil {
+			return "", tx.Err
 		}
 
-		row := rows[0]
+		row := tx.Result[0]
 		if row == nil {
 			return "nil", nil
 		}
@@ -97,21 +100,24 @@ func (S *Session) Exec(query string) (string, error) {
 	case "UPSERT":
 		tableName := args[0]
 
-		data := make(map[string]string)
+		entries := make(map[string]string)
 		for _, entry := range args[1:] {
 			parts := strings.Split(entry, "=")
 			key := parts[0]
 			val := parts[1]
 
-			data[key] = val
+			entries[key] = val
 		}
 
-		rows, err := S.db.Query(tableName).Upsert(data).Exec()
-		if err != nil {
-			return "", err
+		tx := S.db.NewTransaction()
+		tx.UseTable(tableName)
+		tx.UpsertRow(entries)
+
+		if tx.Err != nil {
+			return "", tx.Err
 		}
 
-		row := rows[0]
+		row := tx.Result[0]
 		val, err := row.Serialize()
 		if err != nil {
 			return "", err
@@ -123,10 +129,12 @@ func (S *Session) Exec(query string) (string, error) {
 		tableName := args[0]
 		rowId := args[1]
 
-		_, err := S.db.Query(tableName).Delete(rowId).Exec()
+		tx := S.db.NewTransaction()
+		tx.UseTable(tableName)
+		tx.DeleteRow(rowId)
 
-		if err != nil {
-			return "", err
+		if tx.Err != nil {
+			return "", tx.Err
 		}
 
 		return "OK", nil

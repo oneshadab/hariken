@@ -43,9 +43,9 @@ func (T *Table) Get(rowId string) (*Row, error) {
 	return row, nil
 }
 
-func (T *Table) Insert(data map[string]string) (*Row, error) {
+func (T *Table) Insert(entries map[string]string) (*Row, error) {
 	row := NewRow()
-	for k, v := range data {
+	for k, v := range entries {
 		row.Column[k] = v
 	}
 	row.setId(T.NextId())
@@ -63,7 +63,7 @@ func (T *Table) Insert(data map[string]string) (*Row, error) {
 	return row, nil
 }
 
-func (T *Table) Update(rowId string, data map[string]string) (*Row, error) {
+func (T *Table) Update(rowId string, entries map[string]string) (*Row, error) {
 	row, err := T.Get(rowId)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (T *Table) Update(rowId string, data map[string]string) (*Row, error) {
 		return nil, fmt.Errorf("Row with id `%v` not found", rowId)
 	}
 
-	for k, v := range data {
+	for k, v := range entries {
 		row.Column[k] = v
 	}
 
