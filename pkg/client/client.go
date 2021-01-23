@@ -65,7 +65,8 @@ func (C *Client) Process(reader io.Reader, writer io.Writer) (bool, error) {
 		return false, fmt.Errorf("Failed to read string from reader: %s", err)
 	}
 
-	if len(strings.TrimSpace(msg)) == 0 {
+	msg = strings.TrimSpace(msg)
+	if len(msg) == 0 {
 		// Empty command so skip
 		return false, nil
 	}

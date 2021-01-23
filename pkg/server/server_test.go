@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net"
 	"testing"
+
+	"github.com/oneshadab/hariken/pkg/protocol"
 )
 
 func TestServer(t *testing.T) {
@@ -113,21 +115,17 @@ func TestServer(t *testing.T) {
 	connWriter := bufio.NewWriter(conn)
 
 	for i, tc := range testCases {
-		_, err = fmt.Fprintln(connWriter, tc.command)
-		if err != nil {
-			t.Fatal(err)
-		}
-		err = connWriter.Flush()
+		err = protocol.WriteMessage(connWriter, tc.command)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		reply, err := connReader.ReadString('\n')
+		reply, err := protocol.ReadMessage(connReader)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if reply != tc.expectedResult+"\n" {
+		if reply != tc.expectedResult {
 			t.Fatalf("TEST %d: Expected %s got %s for %s", i, tc.expectedResult, reply, tc.command)
 		}
 	}
