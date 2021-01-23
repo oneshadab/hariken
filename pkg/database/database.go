@@ -34,6 +34,9 @@ func (db *Database) Table(tableName string) (*Table, error) {
 	return table, nil
 }
 
-func (db *Database) Query(tableName string) *Query {
-	return NewQuery(db, tableName)
+func (db *Database) NewTransaction() *Transaction {
+	tx := &Transaction{
+		db: db,
+	}
+	return tx
 }
