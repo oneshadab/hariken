@@ -7,6 +7,8 @@ import (
 	"net"
 	"os"
 	"strings"
+
+	"github.com/oneshadab/hariken/pkg/protocol"
 )
 
 type Client struct {
@@ -68,27 +70,22 @@ func (C *Client) Process(reader io.Reader, writer io.Writer) (bool, error) {
 		return false, nil
 	}
 
-	_, err = C.writer.WriteString(msg)
+	err = protocol.WriteMessage(C.writer, msg)
 	if err != nil {
 		return false, fmt.Errorf("Failed to write message to server: %s", err)
 	}
 
-	err = C.writer.Flush()
+	reply, err := protocol.ReadMessage(C.reader)
 	if err != nil {
 		return false, err
 	}
 
-	reply, err := C.reader.ReadString('\n')
+	fmt.Fprint(writer, reply+"\n")
 	if err != nil {
 		return false, err
 	}
 
-	fmt.Fprint(writer, reply)
-	if err != nil {
-		return false, err
-	}
-
-	if reply == "KTHXBYE\n" {
+	if reply == "KTHXBYE" {
 		return true, nil
 	}
 
