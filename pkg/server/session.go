@@ -2,13 +2,12 @@ package server
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"strings"
 
-	"github.com/olekukonko/tablewriter"
 	"github.com/oneshadab/hariken/pkg/database"
 	"github.com/oneshadab/hariken/pkg/protocol"
+	"github.com/oneshadab/hariken/pkg/utils"
 )
 
 type Session struct {
@@ -92,7 +91,7 @@ func (S *Session) Exec(query string) (string, error) {
 			return "nil", nil
 		}
 
-		output := generateTable(headers, []map[string]string{row.Column})
+		output := utils.GenerateTable(headers, []map[string]string{row.Column})
 		return output, nil
 
 	case "UPSERT":
@@ -121,7 +120,7 @@ func (S *Session) Exec(query string) (string, error) {
 		}
 		row := tx.Result[0]
 
-		output := generateTable(headers, []map[string]string{row.Column})
+		output := utils.GenerateTable(headers, []map[string]string{row.Column})
 		return output, nil
 
 	case "DELETE":
@@ -155,22 +154,4 @@ func (S *Session) useDatabase(dbName string) error {
 	S.db = db
 
 	return nil
-}
-
-func generateTable(headers []string, entries []map[string]string) string {
-	buf := new(bytes.Buffer)
-
-	table := tablewriter.NewWriter(buf)
-	table.SetHeader(headers)
-
-	for _, entry := range entries {
-		vals := make([]string, 0, len(entry))
-		for _, header := range headers {
-			vals = append(vals, entry[header])
-		}
-		table.Append(vals)
-	}
-	table.Render()
-
-	return buf.String()
 }
