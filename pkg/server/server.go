@@ -7,20 +7,16 @@ import (
 )
 
 type Server struct {
-	config *Config
-
 	listener net.Listener
 }
 
-func NewServer(config *Config) (*Server, error) {
-	err := config.Validate()
+func NewServer(cfg *Config) (*Server, error) {
+	err := LoadConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create server: %s", err)
 	}
 
-	server := Server{
-		config: config,
-	}
+	server := Server{}
 
 	server.listener, err = net.Listen("tcp", config.ConnString)
 	if err != nil {
@@ -45,7 +41,7 @@ func (server *Server) WaitForConnections() {
 			connReader := bufio.NewReader(conn)
 			connWriter := bufio.NewWriter(conn)
 
-			session, err := NewSession(connReader, connWriter, server.config)
+			session, err := NewSession(connReader, connWriter)
 			if err != nil {
 				msg := fmt.Sprintf("Failed to initialize session: %v", err)
 				fmt.Println(msg)

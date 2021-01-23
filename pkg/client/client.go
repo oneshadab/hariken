@@ -12,15 +12,14 @@ import (
 )
 
 type Client struct {
-	conn   net.Conn
-	config *Config
+	conn net.Conn
 
 	reader *bufio.Reader
 	writer *bufio.Writer
 }
 
-func NewClient(config *Config) (*Client, error) {
-	err := config.Validate()
+func NewClient(cfg *Config) (*Client, error) {
+	err := LoadConfig(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to create client: %s", err)
 	}

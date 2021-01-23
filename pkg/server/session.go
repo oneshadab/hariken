@@ -11,16 +11,13 @@ import (
 )
 
 type Session struct {
-	config *Config
-
 	db     *database.Database
 	reader *bufio.Reader
 	writer *bufio.Writer
 }
 
-func NewSession(connReader *bufio.Reader, connWriter *bufio.Writer, config *Config) (*Session, error) {
+func NewSession(connReader *bufio.Reader, connWriter *bufio.Writer) (*Session, error) {
 	session := Session{
-		config: config,
 		reader: connReader,
 		writer: connWriter,
 	}
@@ -146,7 +143,7 @@ func (S *Session) Exec(query string) (string, error) {
 }
 
 func (S *Session) useDatabase(dbName string) error {
-	db, err := database.LoadDatabase(S.config.DatabasePath(dbName))
+	db, err := database.LoadDatabase(config.DatabasePath(dbName))
 	if err != nil {
 		return err
 	}

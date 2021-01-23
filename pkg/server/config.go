@@ -5,11 +5,23 @@ import (
 	"path/filepath"
 )
 
+var config *Config
+
 type Config struct {
 	ConnString  string
 	StorageRoot string
 
 	DefaultDatabaseName string // The default database to use when a session is started
+}
+
+func LoadConfig(cfg *Config) error {
+	err := cfg.Validate()
+	if err != nil {
+		return err
+	}
+
+	config = cfg
+	return nil
 }
 
 func (c *Config) DatabasePath(databaseName string) string {
