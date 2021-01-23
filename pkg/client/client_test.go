@@ -1,9 +1,12 @@
 package client
 
 import (
+	"bufio"
 	"bytes"
 	"net"
 	"testing"
+
+	"github.com/oneshadab/hariken/pkg/protocol"
 )
 
 func TestClient(t *testing.T) {
@@ -25,7 +28,12 @@ func TestClient(t *testing.T) {
 		ConnString: "localhost:4252",
 	}
 
-	go newEchoServer(config.ConnString)
+	go func() {
+		err := newEchoServer(config.ConnString)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
 
 	client, err := NewClient(config)
 	if err != nil {
@@ -43,7 +51,7 @@ func TestClient(t *testing.T) {
 
 		reply := writer.String()
 		if reply != tc.expectedReply+"\n" {
-			t.Fatalf("TEST %d: Expected %s got %s for %s", i, tc.expectedReply, reply, tc.message)
+			t.Fatalf("TEST %d: Expected `%s` got `%s` for `%s`", i, tc.expectedReply, reply, tc.message)
 		}
 
 		if done {
@@ -64,15 +72,16 @@ func newEchoServer(connString string) error {
 		return err
 	}
 
-	for {
-		data := make([]byte, 1)
+	connReader := bufio.NewReader(conn)
+	connWriter := bufio.NewWriter(conn)
 
-		_, err = conn.Read(data)
+	for {
+		msg, err := protocol.ReadMessage(connReader)
 		if err != nil {
 			return err
 		}
 
-		_, err = conn.Write(data)
+		err = protocol.WriteMessage(connWriter, msg)
 		if err != nil {
 			return err
 		}
