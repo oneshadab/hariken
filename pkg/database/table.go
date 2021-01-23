@@ -2,22 +2,28 @@ package database
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 
 	"github.com/oneshadab/hariken/pkg/storage"
 )
 
 type Table struct {
-	store      *storage.Store
-	lastUsedId int
+	metaDataStore *storage.Store
+	rowStore      *storage.Store
 }
 
-func LoadTable(filepath string) (*Table, error) {
+func LoadTable(tableDir string) (*Table, error) {
 	var err error
 
 	table := &Table{}
-	table.store, err = storage.NewStore(filepath)
 
+	table.metaDataStore, err = storage.NewStore(filepath.Join(tableDir, "metadata"))
+	if err != nil {
+		return nil, err
+	}
+
+	table.rowStore, err = storage.NewStore(filepath.Join(tableDir, "data"))
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +32,7 @@ func LoadTable(filepath string) (*Table, error) {
 }
 
 func (T *Table) Get(rowId string) (*Row, error) {
-	rowData, err := T.store.Get(string(rowId))
+	rowData, err := T.rowStore.Get(rowId)
 	if err != nil {
 		return nil, err
 	}
@@ -48,14 +54,19 @@ func (T *Table) Insert(entries map[string]string) (*Row, error) {
 	for k, v := range entries {
 		row.Column[k] = v
 	}
-	row.setId(T.NextId())
+
+	rowId, err := T.NextId()
+	if err != nil {
+		return nil, err
+	}
+	row.setId(rowId)
 
 	rowData, err := row.Serialize()
 	if err != nil {
 		return nil, err
 	}
 
-	err = T.store.Set(row.Id(), *rowData)
+	err = T.rowStore.Set(row.Id(), *rowData)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +93,7 @@ func (T *Table) Update(rowId string, entries map[string]string) (*Row, error) {
 		return nil, err
 	}
 
-	err = T.store.Set(row.Id(), *rowData)
+	err = T.rowStore.Set(row.Id(), *rowData)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +102,7 @@ func (T *Table) Update(rowId string, entries map[string]string) (*Row, error) {
 }
 
 func (T *Table) Delete(rowId string) error {
-	rowExists, err := T.store.Has(rowId)
+	rowExists, err := T.rowStore.Has(rowId)
 	if err != nil {
 		return err
 	}
@@ -100,7 +111,7 @@ func (T *Table) Delete(rowId string) error {
 		return fmt.Errorf("Row with id `%v` not found", rowId)
 	}
 
-	err = T.store.Delete(rowId)
+	err = T.rowStore.Delete(rowId)
 	if err != nil {
 		return err
 	}
@@ -108,8 +119,33 @@ func (T *Table) Delete(rowId string) error {
 	return nil
 }
 
-func (T *Table) NextId() string {
-	id := strconv.Itoa(T.lastUsedId)
-	T.lastUsedId++
-	return id
+func (T *Table) NextId() (string, error) {
+	const primaryKey = "lastUsedId" // Todo: move to constant
+
+	idStr, err := T.metaDataStore.Get(primaryKey)
+	if err != nil {
+		return "", err
+	}
+
+	var lastUsedId int
+	if idStr == nil {
+		lastUsedId = 0
+		tmp := "0"
+		idStr = &tmp
+	} else {
+		lastUsedId, err = strconv.Atoi(*idStr)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	lastUsedId++
+
+	newIdStr := strconv.Itoa(lastUsedId)
+	err = T.metaDataStore.Set(primaryKey, newIdStr)
+	if err != nil {
+		return "", nil
+	}
+
+	return *idStr, nil
 }
