@@ -11,16 +11,11 @@ import (
 )
 
 type Session struct {
-	db     *database.Database
-	reader *bufio.Reader
-	writer *bufio.Writer
+	db *database.Database
 }
 
-func NewSession(connReader *bufio.Reader, connWriter *bufio.Writer) (*Session, error) {
-	session := Session{
-		reader: connReader,
-		writer: connWriter,
-	}
+func NewSession() (*Session, error) {
+	session := Session{}
 
 	err := session.useDatabase(config.DefaultDatabaseName)
 	if err != nil {
@@ -30,9 +25,10 @@ func NewSession(connReader *bufio.Reader, connWriter *bufio.Writer) (*Session, e
 	return &session, nil
 }
 
-func (S *Session) Start() error {
+func (S *Session) Start(reader *bufio.Reader, writer *bufio.Writer) error {
+	//Todo: handle terminating session
 	for {
-		query, err := protocol.ReadMessage(S.reader)
+		query, err := protocol.ReadMessage(reader)
 		if err != nil {
 			return err
 		}
@@ -42,7 +38,7 @@ func (S *Session) Start() error {
 			return err
 		}
 
-		err = protocol.WriteMessage(S.writer, result)
+		err = protocol.WriteMessage(writer, result)
 		if err != nil {
 			return err
 		}

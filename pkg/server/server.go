@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+
+	"github.com/oneshadab/hariken/pkg/protocol"
 )
 
 type Server struct {
@@ -41,12 +43,12 @@ func (server *Server) WaitForConnections() {
 			connReader := bufio.NewReader(conn)
 			connWriter := bufio.NewWriter(conn)
 
-			session, err := NewSession(connReader, connWriter)
+			session, err := NewSession()
 			if err != nil {
 				msg := fmt.Sprintf("Failed to initialize session: %v", err)
 				fmt.Println(msg)
 
-				_, err = connWriter.WriteString(msg) // Send message to client as well
+				err = protocol.WriteMessage(connWriter, msg) // Send message to client as well
 				if err != nil {
 					fmt.Sprintln("Failed to send message to client")
 				}
@@ -54,7 +56,7 @@ func (server *Server) WaitForConnections() {
 				return
 			}
 
-			err = session.Start()
+			err = session.Start(connReader, connWriter)
 			if err != nil {
 				fmt.Printf("Session exited due to error: %v", err)
 			}
