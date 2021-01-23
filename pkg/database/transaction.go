@@ -6,9 +6,9 @@ type QueryResult [](*Row)
 type Transaction struct {
 	Result QueryResult
 	Err    error // Query will fall-through on error
+	Table  *Table
 
-	db    *Database
-	table *Table
+	db *Database
 }
 
 func (tx *Transaction) UseTable(tableName string) {
@@ -16,7 +16,7 @@ func (tx *Transaction) UseTable(tableName string) {
 		return
 	}
 
-	tx.table, tx.Err = tx.db.Table(tableName)
+	tx.Table, tx.Err = tx.db.Table(tableName)
 }
 
 func (tx *Transaction) FetchRow(rowId string) {
@@ -25,7 +25,7 @@ func (tx *Transaction) FetchRow(rowId string) {
 	}
 
 	var row *Row
-	row, tx.Err = tx.table.Get(rowId)
+	row, tx.Err = tx.Table.Get(rowId)
 
 	tx.Result = QueryResult{row}
 }
@@ -39,9 +39,9 @@ func (tx *Transaction) UpsertRow(entries map[string]string) {
 
 	rowId, rowIdExists := entries["id"]
 	if rowIdExists {
-		row, tx.Err = tx.table.Update(rowId, entries)
+		row, tx.Err = tx.Table.Update(rowId, entries)
 	} else {
-		row, tx.Err = tx.table.Insert(entries)
+		row, tx.Err = tx.Table.Insert(entries)
 	}
 
 	tx.Result = QueryResult{row}
@@ -52,5 +52,5 @@ func (tx *Transaction) DeleteRow(rowId string) {
 		return
 	}
 
-	tx.Err = tx.table.Delete(rowId)
+	tx.Err = tx.Table.Delete(rowId)
 }
