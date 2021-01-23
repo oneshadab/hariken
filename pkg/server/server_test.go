@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/oneshadab/hariken/pkg/protocol"
+	"github.com/oneshadab/hariken/pkg/utils"
 )
 
 func TestServer(t *testing.T) {
@@ -44,21 +45,28 @@ func TestServer(t *testing.T) {
 			expectedResult: "nil",
 		},
 		{
-			command:        fmt.Sprintf("UPSERT %s name=%s", tData[0].tableName, tData[0].name),
-			expectedResult: `{"Column":{"id":"0","name":"john"}}`,
+			command: fmt.Sprintf("UPSERT %s name=%s", tData[0].tableName, tData[0].name),
+			expectedResult: utils.GenerateTable(
+				[]string{"id", "name"},
+				[]map[string]string{{"id": tData[0].id, "name": tData[0].name}}),
 		},
 		{
-			command:        fmt.Sprintf("GET %s %s", tData[0].tableName, tData[0].id),
-			expectedResult: `{"Column":{"id":"0","name":"john"}}`,
+			command: fmt.Sprintf("GET %s %s", tData[0].tableName, tData[0].id),
+			expectedResult: utils.GenerateTable(
+				[]string{"id", "name"},
+				[]map[string]string{{"id": tData[0].id, "name": tData[0].name}}),
 		},
 		{
-			command:        fmt.Sprintf("UPSERT %s id=%s age=%s", tData[0].tableName, tData[0].id, tData[0].age),
-			expectedResult: `{"Column":{"age":"32","id":"0","name":"john"}}`,
+			command: fmt.Sprintf("UPSERT %s id=%s age=%s", tData[0].tableName, tData[0].id, tData[0].age),
+			expectedResult: utils.GenerateTable(
+				[]string{"id", "name", "age"},
+				[]map[string]string{{"id": tData[0].id, "name": tData[0].name, "age": tData[0].age}}),
 		},
 		{
-			command:        fmt.Sprintf("GET %s %s", tData[0].tableName, tData[0].id),
-			expectedResult: `{"Column":{"age":"32","id":"0","name":"john"}}`,
-		},
+			command: fmt.Sprintf("GET %s %s", tData[0].tableName, tData[0].id),
+			expectedResult: utils.GenerateTable(
+				[]string{"id", "name", "age"},
+				[]map[string]string{{"id": tData[0].id, "name": tData[0].name, "age": tData[0].age}})},
 		{
 			command:        fmt.Sprintf("USE %s", tData[1].databaseName),
 			expectedResult: "OK",
@@ -68,13 +76,15 @@ func TestServer(t *testing.T) {
 			expectedResult: "nil",
 		},
 		{
-			command:        fmt.Sprintf("Upsert %s name=%s", tData[1].tableName, tData[1].name),
-			expectedResult: `{"Column":{"id":"0","name":"jack"}}`,
-		},
+			command: fmt.Sprintf("Upsert %s name=%s", tData[1].tableName, tData[1].name),
+			expectedResult: utils.GenerateTable(
+				[]string{"id", "name"},
+				[]map[string]string{{"id": tData[1].id, "name": tData[1].name}})},
 		{
-			command:        fmt.Sprintf("GET %s %s", tData[1].tableName, tData[1].id),
-			expectedResult: `{"Column":{"id":"0","name":"jack"}}`,
-		},
+			command: fmt.Sprintf("GET %s %s", tData[1].tableName, tData[1].id),
+			expectedResult: utils.GenerateTable(
+				[]string{"id", "name"},
+				[]map[string]string{{"id": tData[1].id, "name": tData[1].name}})},
 		{
 			command:        fmt.Sprintf("DELETE %s %s", tData[1].tableName, tData[1].id),
 			expectedResult: "OK",
