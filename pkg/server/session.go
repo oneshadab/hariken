@@ -6,21 +6,22 @@ import (
 	"strings"
 
 	"github.com/oneshadab/hariken/pkg/database"
+	"github.com/oneshadab/hariken/pkg/protocol"
 )
 
 type Session struct {
 	config *Config
 
 	db     *database.Database
-	reader bufio.Reader
-	writer bufio.Writer
+	reader *bufio.Reader
+	writer *bufio.Writer
 }
 
 func NewSession(connReader *bufio.Reader, connWriter *bufio.Writer, config *Config) (*Session, error) {
 	session := Session{
 		config: config,
-		reader: *connReader,
-		writer: *connWriter,
+		reader: connReader,
+		writer: connWriter,
 	}
 
 	err := session.useDatabase(config.DefaultDatabaseName)
@@ -33,7 +34,7 @@ func NewSession(connReader *bufio.Reader, connWriter *bufio.Writer, config *Conf
 
 func (S *Session) Start() error {
 	for {
-		query, err := S.reader.ReadString('\n')
+		query, err := protocol.ReadMessage(S.reader)
 		if err != nil {
 			return err
 		}
@@ -43,12 +44,7 @@ func (S *Session) Start() error {
 			return err
 		}
 
-		_, err = S.writer.WriteString(fmt.Sprintf("%s\n", result))
-		if err != nil {
-			return err
-		}
-
-		err = S.writer.Flush()
+		err = protocol.WriteMessage(S.writer, result)
 		if err != nil {
 			return err
 		}
