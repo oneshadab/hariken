@@ -3,6 +3,7 @@ package server
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"net"
 
 	"github.com/oneshadab/hariken/pkg/protocol"
@@ -38,7 +39,12 @@ func (server *Server) WaitForConnections() {
 
 		// Start new session in new thread
 		go func() {
-			defer conn.Close()
+			defer func(){
+				err = conn.Close()
+				if err != nil {
+					log.Fatal(err)
+				}
+			}()
 
 			connReader := bufio.NewReader(conn)
 			connWriter := bufio.NewWriter(conn)
