@@ -54,7 +54,10 @@ func (T *Table) Insert(entries map[string]string) (*Row, error) {
 	row := NewRow()
 	for k, v := range entries {
 		row.Column[k] = v
-		T.AddColumn(k)
+		err := T.AddColumn(k)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	rowId, err := T.NextId()
@@ -88,7 +91,10 @@ func (T *Table) Update(rowId string, entries map[string]string) (*Row, error) {
 
 	for k, v := range entries {
 		row.Column[k] = v
-		T.AddColumn(k)
+		err := T.AddColumn(k)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	rowData, err := row.Serialize()

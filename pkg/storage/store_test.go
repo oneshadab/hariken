@@ -2,6 +2,7 @@ package storage
 
 import (
 	"io/ioutil"
+	"log"
 	"testing"
 )
 
@@ -14,7 +15,13 @@ func TestPersistence(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer testFile.Close()
+
+	defer func(){
+		err = testFile.Close()
+		if err != nil{
+			log.Fatal(err)
+		}
+	}()
 
 	storeFilePath := testFile.Name()
 
@@ -50,11 +57,14 @@ func TestPersistence(t *testing.T) {
 
 	// 2nd store should read the same value stored by store
 	if testData.value != *value {
-		t.Fatalf("Exptected %v got %v", testData.value, value)
+		t.Fatalf("Expected %v got %v", testData.value, value)
 	}
 
 	// Part 3: We delete the key and try to read it again
-	store2.Delete(testData.key)
+	err = store2.Delete(testData.key)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Open another store at the same location
 	store3, err := NewStore(storeFilePath)

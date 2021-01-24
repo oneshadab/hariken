@@ -46,7 +46,11 @@ func (S *Store) Set(key string, val string) error {
 		return err
 	}
 
-	S.memTable.Set(key, val)
+	err = S.memTable.Set(key, val)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -60,7 +64,11 @@ func (S *Store) Delete(key string) error {
 		return err
 	}
 
-	S.memTable.Delete(key)
+	err = S.memTable.Delete(key)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -77,9 +85,15 @@ func (S *Store) loadFromLog() error {
 		}
 
 		if entry.IsDeleted {
-			S.memTable.Delete(entry.Key)
+			err = S.memTable.Delete(entry.Key)
+			if err != nil {
+				return err
+			}
 		} else {
-			S.memTable.Set(entry.Key, entry.Val)
+			err = S.memTable.Set(entry.Key, entry.Val)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

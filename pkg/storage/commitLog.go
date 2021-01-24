@@ -23,7 +23,11 @@ func NewCommitLog(path string) (*CommitLog, error) {
 
 	commitLog := CommitLog{}
 
-	os.MkdirAll(filepath.Dir(path), os.ModePerm)
+	err = os.MkdirAll(filepath.Dir(path), os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+
 	commitLog.logFile, err = os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return nil, err
