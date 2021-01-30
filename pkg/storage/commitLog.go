@@ -13,8 +13,8 @@ type CommitLog struct {
 }
 
 type LogEntry struct {
-	Key       string
-	Val       string
+	Key       []byte
+	Val       []byte
 	IsDeleted bool
 }
 
