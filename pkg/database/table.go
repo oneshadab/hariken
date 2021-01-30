@@ -10,9 +10,17 @@ import (
 )
 
 const (
-	lastUsedIdKey byte = iota
-	columnListKey
+	keySize = 4 // Make keySize configurable
 )
+
+// Todo: Find something better than this
+var keyConstants = struct {
+	lastUsedId []byte
+	columnList []byte
+}{
+	lastUsedId: []byte{0},
+	columnList: []byte{1},
+}
 
 type Table struct {
 	metaDataStore *storage.Store
@@ -24,12 +32,12 @@ func LoadTable(tableDir string) (*Table, error) {
 
 	table := &Table{}
 
-	table.metaDataStore, err = storage.NewStore(filepath.Join(tableDir, "metadata"))
+	table.metaDataStore, err = storage.NewStore(filepath.Join(tableDir, "metadata"), keySize)
 	if err != nil {
 		return nil, err
 	}
 
-	table.rowStore, err = storage.NewStore(filepath.Join(tableDir, "data"))
+	table.rowStore, err = storage.NewStore(filepath.Join(tableDir, "data"), keySize)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +142,7 @@ func (T *Table) Delete(rowId string) error {
 }
 
 func (T *Table) Columns() ([]string, error) {
-	colData, err := T.metaDataStore.Get([]byte{columnListKey})
+	colData, err := T.metaDataStore.Get(keyConstants.columnList)
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +172,7 @@ func (T *Table) AddColumn(colName string) error {
 
 	cols = append(cols, colName)
 
-	err = T.metaDataStore.Set([]byte{columnListKey}, []byte(strings.Join(cols, ",")))
+	err = T.metaDataStore.Set(keyConstants.columnList, []byte(strings.Join(cols, ",")))
 	if err != nil {
 		return err
 	}
@@ -173,7 +181,7 @@ func (T *Table) AddColumn(colName string) error {
 }
 
 func (T *Table) NextId() (string, error) {
-	idData, err := T.metaDataStore.Get([]byte{lastUsedIdKey})
+	idData, err := T.metaDataStore.Get(keyConstants.lastUsedId)
 	if err != nil {
 		return "", err
 	}
@@ -190,7 +198,7 @@ func (T *Table) NextId() (string, error) {
 	lastUsedId++
 
 	newIdStr := strconv.Itoa(lastUsedId)
-	err = T.metaDataStore.Set([]byte{lastUsedIdKey}, []byte(newIdStr))
+	err = T.metaDataStore.Set(keyConstants.lastUsedId, []byte(newIdStr))
 	if err != nil {
 		return "", nil
 	}
