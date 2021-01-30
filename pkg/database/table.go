@@ -7,19 +7,16 @@ import (
 	"strings"
 
 	"github.com/oneshadab/hariken/pkg/storage"
-)
-
-const (
-	keySize = 4 // Make keySize configurable
+	"github.com/oneshadab/hariken/pkg/utils"
 )
 
 // Todo: Find something better than this
 var keyConstants = struct {
-	lastUsedId []byte
-	columnList []byte
+	lastUsedId storage.StoreKey
+	columnList storage.StoreKey
 }{
-	lastUsedId: []byte{0},
-	columnList: []byte{1},
+	lastUsedId: storage.StoreKey{0},
+	columnList: storage.StoreKey{1},
 }
 
 type Table struct {
@@ -32,12 +29,12 @@ func LoadTable(tableDir string) (*Table, error) {
 
 	table := &Table{}
 
-	table.metaDataStore, err = storage.NewStore(filepath.Join(tableDir, "metadata"), keySize)
+	table.metaDataStore, err = storage.NewStore(filepath.Join(tableDir, "metadata"))
 	if err != nil {
 		return nil, err
 	}
 
-	table.rowStore, err = storage.NewStore(filepath.Join(tableDir, "data"), keySize)
+	table.rowStore, err = storage.NewStore(filepath.Join(tableDir, "data"))
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +43,12 @@ func LoadTable(tableDir string) (*Table, error) {
 }
 
 func (T *Table) Get(rowId string) (*Row, error) {
-	rowData, err := T.rowStore.Get([]byte(rowId))
+	rowKey, err := utils.ParseKey(rowId)
+	if err != nil {
+		return nil, err
+	}
+
+	rowData, err := T.rowStore.Get(rowKey)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +86,12 @@ func (T *Table) Insert(entries map[string]string) (*Row, error) {
 		return nil, err
 	}
 
-	err = T.rowStore.Set([]byte(row.Id()), rowData)
+	rowKey, err := utils.ParseKey(row.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	err = T.rowStore.Set(rowKey, rowData)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +122,12 @@ func (T *Table) Update(rowId string, entries map[string]string) (*Row, error) {
 		return nil, err
 	}
 
-	err = T.rowStore.Set([]byte(row.Id()), rowData)
+	rowKey, err := utils.ParseKey(row.Id())
+	if err != nil {
+		return nil, err
+	}
+
+	err = T.rowStore.Set(rowKey, rowData)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +136,12 @@ func (T *Table) Update(rowId string, entries map[string]string) (*Row, error) {
 }
 
 func (T *Table) Delete(rowId string) error {
-	rowExists, err := T.rowStore.Has([]byte(rowId))
+	rowKey, err := utils.ParseKey(rowId)
+	if err != nil {
+		return err
+	}
+
+	rowExists, err := T.rowStore.Has(rowKey)
 	if err != nil {
 		return err
 	}
@@ -133,7 +150,7 @@ func (T *Table) Delete(rowId string) error {
 		return fmt.Errorf("Row with id `%v` not found", rowId)
 	}
 
-	err = T.rowStore.Delete([]byte(rowId))
+	err = T.rowStore.Delete(rowKey)
 	if err != nil {
 		return err
 	}
