@@ -2,13 +2,16 @@ package storage
 
 // A Generic Persistent Key-Value store
 type Store struct {
+	keySize int
 	memTable  *MemTable
 	commitLog *CommitLog
 }
 
-func NewStore(filepath string) (*Store, error) {
+func NewStore(dir string, keySize int) (*Store, error) {
 	var err error
-	store := &Store{}
+	store := &Store{
+		keySize: keySize,
+	}
 
 	store.commitLog, err = NewCommitLog(filepath)
 	if err != nil {
@@ -29,14 +32,26 @@ func NewStore(filepath string) (*Store, error) {
 }
 
 func (S *Store) Has(key []byte) (bool, error) {
+	if len(key) != S.keySize {
+		return false, fmt.Errorf("Expected key of size %d got %d", S.keySize, len(key))
+	}
+
 	return S.memTable.Has(key)
 }
 
 func (S *Store) Get(key []byte) ([]byte, error) {
+	if len(key) != S.keySize {
+		return nil, fmt.Errorf("Expected key of size %d got %d", S.keySize, len(key))
+	}
+
 	return S.memTable.Get(key)
 }
 
 func (S *Store) Set(key []byte, val []byte) error {
+	if len(key) != S.keySize {
+		return fmt.Errorf("Expected key of size %d got %d", S.keySize, len(key))
+	}
+
 	err := S.commitLog.Write(LogEntry{
 		Key: key,
 		Val: val,
@@ -55,6 +70,10 @@ func (S *Store) Set(key []byte, val []byte) error {
 }
 
 func (S *Store) Delete(key []byte) error {
+	if len(key) != S.keySize {
+		return fmt.Errorf("Expected key of size %d got %d", S.keySize, len(key))
+	}
+
 	err := S.commitLog.Write(LogEntry{
 		Key:       key,
 		IsDeleted: true,
