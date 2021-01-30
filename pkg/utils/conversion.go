@@ -3,6 +3,9 @@ package utils
 import (
 	"encoding/binary"
 	"fmt"
+	"strconv"
+
+	"github.com/oneshadab/hariken/pkg/storage"
 )
 
 func NumToKey(num int, keySize int) ([]byte, error) {
@@ -25,11 +28,17 @@ func KeyToNum(key []byte) (int, error) {
 	return int(num), nil
 }
 
-func StrToKey(s string, keySize int) ([]byte, error) {
-	if len(s) > keySize {
-		return nil, fmt.Errorf("string does not fit in key")
+func ParseKey(s string) (storage.StoreKey, error) {
+	var key storage.StoreKey
+
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return key, err
 	}
-	return []byte(s), nil
+
+	var buf [8]byte
+	binary.BigEndian.PutUint64(buf[:], uint64(n))
+	return key, nil
 }
 
 func KeyToStr(key []byte) string {
