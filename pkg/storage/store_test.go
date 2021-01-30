@@ -33,10 +33,10 @@ func TestPersistence(t *testing.T) {
 	}
 
 	testData := struct {
-		key   []byte
+		key   StoreKey
 		value []byte
 	}{
-		key:   []byte("name"),
+		key:   StoreKey{0},
 		value: []byte("john"),
 	}
 
