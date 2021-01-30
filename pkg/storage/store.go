@@ -1,13 +1,15 @@
 package storage
 
+import "fmt"
+
 // A Generic Persistent Key-Value store
 type Store struct {
-	keySize int
+	keySize   int
 	memTable  *MemTable
 	commitLog *CommitLog
 }
 
-func NewStore(dir string, keySize int) (*Store, error) {
+func NewStore(filepath string, keySize int) (*Store, error) {
 	var err error
 	store := &Store{
 		keySize: keySize,
