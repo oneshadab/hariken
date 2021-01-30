@@ -9,6 +9,11 @@ import (
 	"github.com/oneshadab/hariken/pkg/storage"
 )
 
+const (
+	lastUsedIdKey byte = iota
+	columnListKey
+)
+
 type Table struct {
 	metaDataStore *storage.Store
 	rowStore      *storage.Store
@@ -33,7 +38,7 @@ func LoadTable(tableDir string) (*Table, error) {
 }
 
 func (T *Table) Get(rowId string) (*Row, error) {
-	rowData, err := T.rowStore.Get(rowId)
+	rowData, err := T.rowStore.Get([]byte(rowId))
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +76,7 @@ func (T *Table) Insert(entries map[string]string) (*Row, error) {
 		return nil, err
 	}
 
-	err = T.rowStore.Set(row.Id(), *rowData)
+	err = T.rowStore.Set([]byte(row.Id()), rowData)
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +107,7 @@ func (T *Table) Update(rowId string, entries map[string]string) (*Row, error) {
 		return nil, err
 	}
 
-	err = T.rowStore.Set(row.Id(), *rowData)
+	err = T.rowStore.Set([]byte(row.Id()), rowData)
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +116,7 @@ func (T *Table) Update(rowId string, entries map[string]string) (*Row, error) {
 }
 
 func (T *Table) Delete(rowId string) error {
-	rowExists, err := T.rowStore.Has(rowId)
+	rowExists, err := T.rowStore.Has([]byte(rowId))
 	if err != nil {
 		return err
 	}
@@ -120,7 +125,7 @@ func (T *Table) Delete(rowId string) error {
 		return fmt.Errorf("Row with id `%v` not found", rowId)
 	}
 
-	err = T.rowStore.Delete(rowId)
+	err = T.rowStore.Delete([]byte(rowId))
 	if err != nil {
 		return err
 	}
@@ -129,24 +134,21 @@ func (T *Table) Delete(rowId string) error {
 }
 
 func (T *Table) Columns() ([]string, error) {
-	const columnListKey = "columnNames" // Todo: move to constant
-
-	colStr, err := T.metaDataStore.Get(columnListKey)
+	colData, err := T.metaDataStore.Get([]byte{columnListKey})
 	if err != nil {
 		return nil, err
 	}
 
-	if colStr == nil {
-		tmp := "id" // Always make sure that Id exists
-		colStr = &tmp
+	columns := strings.Split(string(colData), ",")
+	if colData == nil {
+		// Always make sure that id exists
+		columns = []string{"id"}
 	}
 
-	return strings.Split(*colStr, ","), nil
+	return columns, nil
 }
 
 func (T *Table) AddColumn(colName string) error {
-	const columnListKey = "columnNames" // Todo: move to constant
-
 	cols, err := T.Columns()
 	if err != nil {
 		return err
@@ -162,7 +164,7 @@ func (T *Table) AddColumn(colName string) error {
 
 	cols = append(cols, colName)
 
-	err = T.metaDataStore.Set(columnListKey, strings.Join(cols, ","))
+	err = T.metaDataStore.Set([]byte{columnListKey}, []byte(strings.Join(cols, ",")))
 	if err != nil {
 		return err
 	}
@@ -171,32 +173,27 @@ func (T *Table) AddColumn(colName string) error {
 }
 
 func (T *Table) NextId() (string, error) {
-	const lastUsedIdKey = "lastUsedId" // Todo: move to constant
-
-	idStr, err := T.metaDataStore.Get(lastUsedIdKey)
+	idData, err := T.metaDataStore.Get([]byte{lastUsedIdKey})
 	if err != nil {
 		return "", err
 	}
 
-	var lastUsedId int
-	if idStr == nil {
-		lastUsedId = 0
-		tmp := "0"
-		idStr = &tmp
-	} else {
-		lastUsedId, err = strconv.Atoi(*idStr)
-		if err != nil {
-			return "", err
-		}
+	idStr := string(idData)
+	if idData == nil {
+		idStr = "0"
 	}
 
+	lastUsedId, err := strconv.Atoi(idStr)
+	if err != nil {
+		return "", err
+	}
 	lastUsedId++
 
 	newIdStr := strconv.Itoa(lastUsedId)
-	err = T.metaDataStore.Set(lastUsedIdKey, newIdStr)
+	err = T.metaDataStore.Set([]byte{lastUsedIdKey}, []byte(newIdStr))
 	if err != nil {
 		return "", nil
 	}
 
-	return *idStr, nil
+	return idStr, nil
 }
