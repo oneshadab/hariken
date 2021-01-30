@@ -11,7 +11,7 @@ import (
 )
 
 // Todo: Find something better than this
-var keyConstants = struct {
+var metadataKeys = struct {
 	lastUsedId storage.StoreKey
 	columnList storage.StoreKey
 }{
@@ -159,7 +159,7 @@ func (T *Table) Delete(rowId string) error {
 }
 
 func (T *Table) Columns() ([]string, error) {
-	colData, err := T.metaDataStore.Get(keyConstants.columnList)
+	colData, err := T.metaDataStore.Get(metadataKeys.columnList)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (T *Table) AddColumn(colName string) error {
 
 	cols = append(cols, colName)
 
-	err = T.metaDataStore.Set(keyConstants.columnList, []byte(strings.Join(cols, ",")))
+	err = T.metaDataStore.Set(metadataKeys.columnList, []byte(strings.Join(cols, ",")))
 	if err != nil {
 		return err
 	}
@@ -198,7 +198,7 @@ func (T *Table) AddColumn(colName string) error {
 }
 
 func (T *Table) NextId() (string, error) {
-	idData, err := T.metaDataStore.Get(keyConstants.lastUsedId)
+	idData, err := T.metaDataStore.Get(metadataKeys.lastUsedId)
 	if err != nil {
 		return "", err
 	}
@@ -215,7 +215,7 @@ func (T *Table) NextId() (string, error) {
 	lastUsedId++
 
 	newIdStr := strconv.Itoa(lastUsedId)
-	err = T.metaDataStore.Set(keyConstants.lastUsedId, []byte(newIdStr))
+	err = T.metaDataStore.Set(metadataKeys.lastUsedId, []byte(newIdStr))
 	if err != nil {
 		return "", nil
 	}
