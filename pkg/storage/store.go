@@ -28,15 +28,15 @@ func NewStore(filepath string) (*Store, error) {
 	return store, nil
 }
 
-func (S *Store) Has(key string) (bool, error) {
+func (S *Store) Has(key []byte) (bool, error) {
 	return S.memTable.Has(key)
 }
 
-func (S *Store) Get(key string) (*string, error) {
+func (S *Store) Get(key []byte) ([]byte, error) {
 	return S.memTable.Get(key)
 }
 
-func (S *Store) Set(key string, val string) error {
+func (S *Store) Set(key []byte, val []byte) error {
 	err := S.commitLog.Write(LogEntry{
 		Key: key,
 		Val: val,
@@ -54,7 +54,7 @@ func (S *Store) Set(key string, val string) error {
 	return nil
 }
 
-func (S *Store) Delete(key string) error {
+func (S *Store) Delete(key []byte) error {
 	err := S.commitLog.Write(LogEntry{
 		Key:       key,
 		IsDeleted: true,

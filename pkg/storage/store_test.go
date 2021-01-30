@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"io/ioutil"
 	"log"
 	"testing"
@@ -16,9 +17,9 @@ func TestPersistence(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	defer func(){
+	defer func() {
 		err = testFile.Close()
-		if err != nil{
+		if err != nil {
 			log.Fatal(err)
 		}
 	}()
@@ -32,11 +33,11 @@ func TestPersistence(t *testing.T) {
 	}
 
 	testData := struct {
-		key   string
-		value string
+		key   []byte
+		value []byte
 	}{
-		key:   "name",
-		value: "john",
+		key:   []byte("name"),
+		value: []byte("john"),
 	}
 
 	err = store1.Set(testData.key, testData.value)
@@ -56,7 +57,7 @@ func TestPersistence(t *testing.T) {
 	}
 
 	// 2nd store should read the same value stored by store
-	if testData.value != *value {
+	if !bytes.Equal(testData.value, value) {
 		t.Fatalf("Expected %v got %v", testData.value, value)
 	}
 

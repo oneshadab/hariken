@@ -5,19 +5,19 @@ import (
 )
 
 type MemTable struct {
-	entries map[string]string
+	entries map[string][]byte
 }
 
 // A new memtable is created from a commit log
 func NewMemTable() (*MemTable, error) {
 	table := MemTable{
-		entries: make(map[string]string),
+		entries: make(map[string][]byte),
 	}
 
 	return &table, nil
 }
 
-func (table *MemTable) Get(key string) (*string, error) {
+func (table *MemTable) Get(key []byte) ([]byte, error) {
 	hasKey, err := table.Has(key)
 
 	if err != nil {
@@ -28,21 +28,21 @@ func (table *MemTable) Get(key string) (*string, error) {
 		return nil, nil
 	}
 
-	val := table.entries[key]
-	return &val, nil
+	val := table.entries[string(key)]
+	return val, nil
 }
 
-func (table *MemTable) Set(key string, val string) error {
-	table.entries[key] = val
+func (table *MemTable) Set(key []byte, val []byte) error {
+	table.entries[string(key)] = val
 	return nil
 }
 
-func (table *MemTable) Has(key string) (bool, error) {
-	_, ok := table.entries[key]
+func (table *MemTable) Has(key []byte) (bool, error) {
+	_, ok := table.entries[string(key)]
 	return ok, nil
 }
 
-func (table *MemTable) Delete(key string) error {
+func (table *MemTable) Delete(key []byte) error {
 	hasKey, err := table.Has(key)
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (table *MemTable) Delete(key string) error {
 		return fmt.Errorf("key `%s` not found", key)
 	}
 
-	delete(table.entries, key)
+	delete(table.entries, string(key))
 
 	return nil
 }
