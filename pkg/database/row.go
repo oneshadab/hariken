@@ -23,20 +23,19 @@ func (r *Row) setId(Id string) {
 }
 
 // Todo: Replace `json` with custom serialize/deserialize
-func (r *Row) Deserialize(data *string) error {
-	err := json.Unmarshal([]byte(*data), r)
+func (r *Row) Deserialize(data []byte) error {
+	err := json.Unmarshal(data, r)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *Row) Serialize() (*string, error) {
+func (r *Row) Serialize() ([]byte, error) {
 	data, err := json.Marshal(r)
 	if err != nil {
 		return nil, err
 	}
 
-	s := string(data)
-	return &s, nil
+	return data, nil
 }
