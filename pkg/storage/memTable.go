@@ -2,24 +2,22 @@ package storage
 
 import (
 	"fmt"
-
-	"github.com/oneshadab/hariken/pkg/utils"
 )
 
 type MemTable struct {
-	entries map[string][]byte
+	entries map[StoreKey][]byte
 }
 
 // A new memtable is created from a commit log
 func NewMemTable() (*MemTable, error) {
 	table := MemTable{
-		entries: make(map[string][]byte),
+		entries: make(map[StoreKey][]byte),
 	}
 
 	return &table, nil
 }
 
-func (table *MemTable) Get(key []byte) ([]byte, error) {
+func (table *MemTable) Get(key StoreKey) ([]byte, error) {
 	hasKey, err := table.Has(key)
 
 	if err != nil {
@@ -30,21 +28,21 @@ func (table *MemTable) Get(key []byte) ([]byte, error) {
 		return nil, nil
 	}
 
-	val := table.entries[utils.KeyToStr(key)]
+	val := table.entries[key]
 	return val, nil
 }
 
-func (table *MemTable) Set(key []byte, val []byte) error {
-	table.entries[utils.KeyToStr(key)] = val
+func (table *MemTable) Set(key StoreKey, val []byte) error {
+	table.entries[key] = val
 	return nil
 }
 
-func (table *MemTable) Has(key []byte) (bool, error) {
-	_, ok := table.entries[utils.KeyToStr(key)]
+func (table *MemTable) Has(key StoreKey) (bool, error) {
+	_, ok := table.entries[key]
 	return ok, nil
 }
 
-func (table *MemTable) Delete(key []byte) error {
+func (table *MemTable) Delete(key StoreKey) error {
 	hasKey, err := table.Has(key)
 	if err != nil {
 		return err
@@ -54,15 +52,15 @@ func (table *MemTable) Delete(key []byte) error {
 		return fmt.Errorf("key `%s` not found", key)
 	}
 
-	delete(table.entries, utils.KeyToStr(key))
+	delete(table.entries, key)
 
 	return nil
 }
 
-func (table *MemTable) Keys() ([][]byte, error) {
-	keys := make([][]byte, 0, len(table.entries))
+func (table *MemTable) Keys() ([]StoreKey, error) {
+	keys := make([]StoreKey, 0, len(table.entries))
 	for k, _ := range table.entries {
-		keys = append(keys, []byte(k))
+		keys = append(keys, k)
 	}
 	return keys, nil
 }
