@@ -14,3 +14,7 @@ func (key StoreKey) isLess(otherKey StoreKey) bool {
 	}
 	return false
 }
+
+func (key StoreKey) bytes() []byte {
+	return []byte(key[:])
+}
