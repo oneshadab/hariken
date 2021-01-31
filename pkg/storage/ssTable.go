@@ -33,6 +33,25 @@ func NewSSTable(dir string) (*SSTable, error) {
 	return table, nil
 }
 
+func (S *SSTable) Get(key StoreKey) ([]byte, error) {
+	indexEntry, err := S.index.Get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if indexEntry == nil {
+		// No Entry found in sstable
+		return nil, nil
+	}
+
+	dataEntry, err := S.data.ReadAt(indexEntry.dataFilePos)
+	if err != nil {
+		return nil, err
+	}
+
+	return dataEntry.data, nil
+}
+
 func (S *SSTable) Build(mt *MemTable) error {
 	keys, err := mt.Keys()
 	if err != nil {
