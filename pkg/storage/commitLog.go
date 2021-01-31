@@ -81,3 +81,25 @@ func (commitLog *CommitLog) Read() (*LogEntry, error) {
 
 	return &entry, nil
 }
+
+func (cl *CommitLog) Reset() error {
+	_, err := cl.logFile.Seek(0, os.SEEK_SET)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (cl *CommitLog) Flush() error {
+	err := cl.Reset()
+	if err != nil {
+		return err
+	}
+
+	err = cl.logFile.Truncate(0)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
