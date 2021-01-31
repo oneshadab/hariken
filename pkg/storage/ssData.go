@@ -1,17 +1,11 @@
 package storage
 
 import (
-	"encoding/binary"
 	"os"
 )
 
 type ssData struct {
 	dataFile *os.File
-}
-
-type DataFileEntry struct {
-	dataLen int64
-	data    []byte
 }
 
 func newSSData(dataFilePath string) (*ssData, error) {
@@ -31,14 +25,14 @@ func newSSData(dataFilePath string) (*ssData, error) {
 	return ssData, nil
 }
 
-func (ss *ssData) ReadAt(filePos int64) (*DataFileEntry, error) {
+func (ss *ssData) ReadAt(filePos int64) (*LogEntry, error) {
 	_, err := ss.dataFile.Seek(filePos, os.SEEK_SET)
 	if err != nil {
 		return nil, err
 	}
 
-	entry := &DataFileEntry{}
-	err = binary.Read(ss.dataFile, binary.LittleEndian, entry)
+	entry := &LogEntry{}
+	err = entry.Deserialize(ss.dataFile)
 	if err != nil {
 		return nil, err
 	}
@@ -46,28 +40,11 @@ func (ss *ssData) ReadAt(filePos int64) (*DataFileEntry, error) {
 	return entry, nil
 }
 
-func (ss *ssData) write(data []byte) error {
-	dataFileEntry := DataFileEntry{
-		dataLen: int64(len(data)),
-		data:    data,
-	}
-
-	_, err := ss.dataFile.Write(dataFileEntry.Bytes())
+func (ss *ssData) write(entry *LogEntry) error {
+	err := entry.Serialize(ss.dataFile)
 	if err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (e *DataFileEntry) Bytes() []byte {
-	buf := make([]byte, 8)
-
-	// First 8 bytes are the length
-	binary.LittleEndian.PutUint64(buf, uint64(e.dataLen))
-
-	// Next bytes are the data
-	buf = append(buf, e.data...)
-
-	return buf
 }
