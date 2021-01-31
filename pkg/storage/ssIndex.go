@@ -32,6 +32,26 @@ func newSSIndex(indexFilePath string) (*ssIndex, error) {
 	return ss, nil
 }
 
+func (ss *ssIndex) Get(key StoreKey) (*IndexFileEntry, error) {
+	fileInfo, err := ss.indexFile.Stat()
+	if err != nil {
+		return nil, err
+	}
+
+	numEntries := fileInfo.Size() / sizeofIndexEntry()
+	for i := int64(0); i < numEntries; i++ {
+		entry, err := ss.ReadAt(i * sizeofIndexEntry())
+		if err != nil {
+			return nil, err
+		}
+
+		if entry.key == key {
+			return entry, nil
+		}
+	}
+
+	return nil, nil
+}
 
 func (ss *ssIndex) ReadAt(filePos int64) (*IndexFileEntry, error) {
 	_, err := ss.indexFile.Seek(filePos, os.SEEK_SET)
@@ -72,4 +92,8 @@ func (e *IndexFileEntry) Bytes() []byte {
 	binary.LittleEndian.PutUint64(buf[8:], uint64(e.dataFilePos))
 
 	return buf[:]
+}
+
+func sizeofIndexEntry() int64 {
+	return 16
 }
