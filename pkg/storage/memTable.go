@@ -1,9 +1,5 @@
 package storage
 
-import (
-	"fmt"
-)
-
 type MemTable struct {
 	entries map[StoreKey]*LogEntry
 }
@@ -17,50 +13,18 @@ func NewMemTable() (*MemTable, error) {
 	return &table, nil
 }
 
-func (table *MemTable) Get(key StoreKey) ([]byte, error) {
-	hasKey, err := table.Has(key)
-	if err != nil {
-		return nil, err
-	}
-
-	if !hasKey {
-		return nil, nil
-	}
-
-	return table.entries[key].Data, nil
+func (table *MemTable) Get(key StoreKey) (*LogEntry, error) {
+	return table.entries[key], nil
 }
 
-func (table *MemTable) Set(key StoreKey, val []byte) error {
-	table.entries[key] = &LogEntry{
-		Key:       key,
-		Data:      val,
-		IsDeleted: false,
-	}
+func (table *MemTable) Set(key StoreKey, entry *LogEntry) error {
+	table.entries[key] = entry
 	return nil
 }
 
-func (table *MemTable) Has(key StoreKey) (bool, error) {
-	entry, keyExists := table.entries[key]
-	if keyExists {
-		return !entry.IsDeleted, nil
-	}
-
-	return false, nil
-}
-
-func (table *MemTable) Delete(key StoreKey) error {
-	hasKey, err := table.Has(key)
-	if err != nil {
-		return err
-	}
-
-	if !hasKey {
-		return fmt.Errorf("key `%s` not found", key)
-	}
-
-	table.entries[key].IsDeleted = true
-
-	return nil
+func (table *MemTable) hasKey(key StoreKey) (bool, error) {
+	_, ok := table.entries[key]
+	return ok, nil
 }
 
 func (table *MemTable) Keys() ([]StoreKey, error) {

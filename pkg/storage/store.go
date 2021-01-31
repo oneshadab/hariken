@@ -41,12 +41,34 @@ func NewStore(dir string) (*Store, error) {
 }
 
 func (S *Store) Has(key StoreKey) (bool, error) {
-	return S.memTable.Has(key)
+	entry, err := S.find(key)
+	if err != nil {
+		return false, err
+	}
+
+	if entry != nil {
+		return !entry.IsDeleted, nil
+	}
+
+	return false, nil
 }
 
 func (S *Store) Get(key StoreKey) ([]byte, error) {
+	entry, err := S.find(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if entry == nil || entry.IsDeleted {
+		return nil, nil
+	}
+
+	return entry.Data, nil
+}
+
+func (S *Store) find(key StoreKey) (*LogEntry, error) {
 	// First look in memTable
-	found, err := S.memTable.Has(key)
+	found, err := S.memTable.hasKey(key)
 	if err != nil {
 		return nil, err
 	}
@@ -55,9 +77,9 @@ func (S *Store) Get(key StoreKey) ([]byte, error) {
 		return S.memTable.Get(key)
 	}
 
-	// Look for first sstable which has key
+	// Then look for first sstable which has key
 	for _, table := range S.SSTables {
-		found, err := table.Has(key)
+		found, err := table.hasKey(key)
 		if err != nil {
 			return nil, err
 		}
@@ -71,16 +93,19 @@ func (S *Store) Get(key StoreKey) ([]byte, error) {
 }
 
 func (S *Store) Set(key StoreKey, val []byte) error {
-	err := S.commitLog.Write(LogEntry{
-		Key:  key,
-		Data: val,
-	})
+	entry := &LogEntry{
+		Key:       key,
+		Data:      val,
+		IsDeleted: false,
+	}
+
+	err := S.commitLog.Write(entry)
 
 	if err != nil {
 		return err
 	}
 
-	err = S.memTable.Set(key, val)
+	err = S.memTable.Set(key, entry)
 	if err != nil {
 		return err
 	}
@@ -89,19 +114,22 @@ func (S *Store) Set(key StoreKey, val []byte) error {
 }
 
 func (S *Store) Delete(key StoreKey) error {
-	err := S.commitLog.Write(LogEntry{
+	entry := &LogEntry{
 		Key:       key,
 		IsDeleted: true,
-	})
+	}
 
+	err := S.commitLog.Write(entry)
 	if err != nil {
 		return err
 	}
 
-	err = S.memTable.Delete(key)
+	err = S.memTable.Set(key, entry)
 	if err != nil {
 		return err
 	}
+
+	S.syncMemtableWithLog()
 
 	return nil
 }
@@ -115,27 +143,16 @@ func (S *Store) syncMemtableWithLog() error {
 	for {
 		// Read entry from commit log
 		entry, err := S.commitLog.Read()
-
 		if err != nil {
 			return err
 		}
 
+		// nil entry signifies that there's no more data to read
 		if entry == nil {
 			break
 		}
 
-		// Write to memTable
-		if entry.IsDeleted {
-			err = S.memTable.Delete(entry.Key)
-			if err != nil {
-				return err
-			}
-		} else {
-			err = S.memTable.Set(entry.Key, entry.Data)
-			if err != nil {
-				return err
-			}
-		}
+		S.memTable.Set(entry.Key, entry)
 	}
 
 	return nil
