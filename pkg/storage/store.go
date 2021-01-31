@@ -1,18 +1,28 @@
 package storage
 
+import (
+	"path"
+	"strconv"
+)
+
 // A Generic Persistent Key-Value store
 type Store struct {
+	dir string // Todo: use something better
+
 	memTable  *MemTable
 	commitLog *CommitLog
+
+	SSTables [](*SSTable)
 }
 
-type StoreKey [8]byte
-
-func NewStore(filepath string) (*Store, error) {
+func NewStore(dir string) (*Store, error) {
 	var err error
-	store := &Store{}
+	store := &Store{
+		dir: dir,
+	}
 
-	store.commitLog, err = NewCommitLog(filepath)
+	commitLogPath := path.Join(dir, "commitLog")
+	store.commitLog, err = NewCommitLog(commitLogPath)
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +32,7 @@ func NewStore(filepath string) (*Store, error) {
 		return nil, err
 	}
 
-	err = store.loadFromLog()
+	err = store.syncMemtableWithLog()
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +84,14 @@ func (S *Store) Delete(key StoreKey) error {
 	return nil
 }
 
-func (S *Store) loadFromLog() error {
+func (S *Store) syncMemtableWithLog() error {
+	err := S.commitLog.Reset()
+	if err != nil {
+		return err
+	}
+
 	for {
+		// Read entry from commit log
 		entry, err := S.commitLog.Read()
 
 		if err != nil {
@@ -86,6 +102,7 @@ func (S *Store) loadFromLog() error {
 			break
 		}
 
+		// Write to memTable
 		if entry.IsDeleted {
 			err = S.memTable.Delete(entry.Key)
 			if err != nil {
@@ -98,6 +115,47 @@ func (S *Store) loadFromLog() error {
 			}
 		}
 	}
+
+	return nil
+}
+
+func (S *Store) Flush() error {
+	// Create new SSTable from commit log
+	err := S.genNewSSTable()
+	if err != nil {
+		return err
+	}
+
+	// Clear the commit log
+	err = S.commitLog.Flush()
+	if err != nil {
+		return err
+	}
+
+	// Load memtable from commit log
+	err = S.syncMemtableWithLog()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (S *Store) genNewSSTable() error {
+	tableId := strconv.Itoa(len(S.SSTables))
+	ssTableDir := path.Join(S.dir, "ssTables", tableId)
+
+	table, err := NewSSTable(ssTableDir)
+	if err != nil {
+		return err
+	}
+
+	err = table.Build(S.memTable)
+	if err != nil {
+		return err
+	}
+
+	S.SSTables = append(S.SSTables, table)
 
 	return nil
 }
