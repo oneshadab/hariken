@@ -72,8 +72,8 @@ func (S *Store) Get(key StoreKey) ([]byte, error) {
 
 func (S *Store) Set(key StoreKey, val []byte) error {
 	err := S.commitLog.Write(LogEntry{
-		Key: key,
-		Val: val,
+		Key:  key,
+		Data: val,
 	})
 
 	if err != nil {
@@ -131,7 +131,7 @@ func (S *Store) syncMemtableWithLog() error {
 				return err
 			}
 		} else {
-			err = S.memTable.Set(entry.Key, entry.Val)
+			err = S.memTable.Set(entry.Key, entry.Data)
 			if err != nil {
 				return err
 			}
