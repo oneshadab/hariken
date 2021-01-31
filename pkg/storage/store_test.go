@@ -2,32 +2,16 @@ package storage
 
 import (
 	"bytes"
-	"io/ioutil"
-	"log"
 	"testing"
 )
 
 func TestPersistence(t *testing.T) {
 	var err error
 
-	testDir := t.TempDir()
-
-	testFile, err := ioutil.TempFile(testDir, "")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	defer func() {
-		err = testFile.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
-
-	storeFilePath := testFile.Name()
+	storeDir := t.TempDir()
 
 	// Part 1: store the value using a store
-	store1, err := NewStore(storeFilePath)
+	store1, err := NewStore(storeDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +20,7 @@ func TestPersistence(t *testing.T) {
 		key   StoreKey
 		value []byte
 	}{
-		key:   StoreKey{0},
+		key:   StoreKey{7},
 		value: []byte("john"),
 	}
 
@@ -46,7 +30,7 @@ func TestPersistence(t *testing.T) {
 	}
 
 	// Part 2: Try to read the value from another store
-	store2, err := NewStore(storeFilePath)
+	store2, err := NewStore(storeDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -68,7 +52,7 @@ func TestPersistence(t *testing.T) {
 	}
 
 	// Open another store at the same location
-	store3, err := NewStore(storeFilePath)
+	store3, err := NewStore(storeDir)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -80,6 +64,6 @@ func TestPersistence(t *testing.T) {
 
 	// Value should be deleted
 	if hasValue != false {
-		t.Fatalf("Exptected %v got %v", false, hasValue)
+		t.Fatalf("Expected %v got %v", false, hasValue)
 	}
 }
