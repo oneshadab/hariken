@@ -1,8 +1,6 @@
 package storage
 
 import (
-	"encoding/binary"
-	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
@@ -10,12 +8,6 @@ import (
 
 type CommitLog struct {
 	logFile *os.File
-}
-
-type LogEntry struct {
-	Key       StoreKey
-	Data      []byte
-	IsDeleted bool
 }
 
 func NewCommitLog(path string) (*CommitLog, error) {
@@ -36,19 +28,9 @@ func NewCommitLog(path string) (*CommitLog, error) {
 	return &commitLog, nil
 }
 
-func (commitLog *CommitLog) Write(entry LogEntry) error {
-	payload, err := json.Marshal(entry)
-	if err != nil {
-		return err
-	}
+func (cl *CommitLog) Write(entry *LogEntry) error {
+	err := entry.Serialize(cl.logFile)
 
-	payloadLen := int32(len(payload))
-	err = binary.Write(commitLog.logFile, binary.LittleEndian, payloadLen)
-	if err != nil {
-		return err
-	}
-
-	_, err = commitLog.logFile.Write(payload)
 	if err != nil {
 		return err
 	}
@@ -56,26 +38,15 @@ func (commitLog *CommitLog) Write(entry LogEntry) error {
 	return nil
 }
 
-func (commitLog *CommitLog) Read() (*LogEntry, error) {
-	var payloadLen int32
+func (cl *CommitLog) Read() (*LogEntry, error) {
+	var entry LogEntry
 
-	err := binary.Read(commitLog.logFile, binary.LittleEndian, &payloadLen)
+	err := entry.Deserialize(cl.logFile)
+
 	if err != nil {
 		if err == io.EOF {
 			return nil, nil
 		}
-		return nil, err
-	}
-
-	payload := make([]byte, payloadLen)
-	_, err = commitLog.logFile.Read(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	var entry LogEntry
-	err = json.Unmarshal(payload, &entry)
-	if err != nil {
 		return nil, err
 	}
 
