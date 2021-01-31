@@ -12,9 +12,14 @@ type SSTable struct {
 	dataFile  *os.File
 }
 
-type IndexEntry struct {
+type IndexFileEntry struct {
 	key         StoreKey
 	dataFilePos int64
+}
+
+type DataFileEntry struct {
+	dataLen int64
+	data    []byte
 }
 
 func NewSSTable(dir string) (*SSTable, error) {
@@ -65,7 +70,7 @@ func (S *SSTable) Build(mt *MemTable) error {
 			return err
 		}
 
-		indexEntry := IndexEntry{
+		indexEntry := IndexFileEntry{
 			key:         key,
 			dataFilePos: dataFilePos,
 		}
@@ -81,7 +86,12 @@ func (S *SSTable) Build(mt *MemTable) error {
 			return err
 		}
 
-		_, err = S.dataFile.Write(data)
+		dataFileEntry := DataFileEntry{
+			dataLen: int64(len(data)),
+			data:    data,
+		}
+
+		_, err = S.dataFile.Write(dataFileEntry.Bytes())
 		if err != nil {
 			return err
 		}
@@ -90,7 +100,7 @@ func (S *SSTable) Build(mt *MemTable) error {
 	return nil
 }
 
-func (e *IndexEntry) Bytes() []byte {
+func (e *IndexFileEntry) Bytes() []byte {
 	var buf [16]byte
 
 	// First 8 bytes are the key
@@ -100,4 +110,16 @@ func (e *IndexEntry) Bytes() []byte {
 	binary.LittleEndian.PutUint64(buf[8:], uint64(e.dataFilePos))
 
 	return buf[:]
+}
+
+func (e *DataFileEntry) Bytes() []byte {
+	buf := make([]byte, 8)
+
+	// First 8 bytes are the length
+	binary.LittleEndian.PutUint64(buf, uint64(e.dataLen))
+
+	// Next bytes are the data
+	buf = append(buf, e.data...)
+
+	return buf
 }
