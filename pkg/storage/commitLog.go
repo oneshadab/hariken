@@ -14,7 +14,7 @@ type CommitLog struct {
 
 type LogEntry struct {
 	Key       StoreKey
-	Val       []byte
+	Data      []byte
 	IsDeleted bool
 }
 

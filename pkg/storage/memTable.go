@@ -5,13 +5,13 @@ import (
 )
 
 type MemTable struct {
-	entries map[StoreKey][]byte
+	entries map[StoreKey]*LogEntry
 }
 
 // A new memtable is created from a commit log
 func NewMemTable() (*MemTable, error) {
 	table := MemTable{
-		entries: make(map[StoreKey][]byte),
+		entries: make(map[StoreKey]*LogEntry),
 	}
 
 	return &table, nil
@@ -19,7 +19,6 @@ func NewMemTable() (*MemTable, error) {
 
 func (table *MemTable) Get(key StoreKey) ([]byte, error) {
 	hasKey, err := table.Has(key)
-
 	if err != nil {
 		return nil, err
 	}
@@ -28,18 +27,25 @@ func (table *MemTable) Get(key StoreKey) ([]byte, error) {
 		return nil, nil
 	}
 
-	val := table.entries[key]
-	return val, nil
+	return table.entries[key].Data, nil
 }
 
 func (table *MemTable) Set(key StoreKey, val []byte) error {
-	table.entries[key] = val
+	table.entries[key] = &LogEntry{
+		Key:       key,
+		Data:      val,
+		IsDeleted: false,
+	}
 	return nil
 }
 
 func (table *MemTable) Has(key StoreKey) (bool, error) {
-	_, ok := table.entries[key]
-	return ok, nil
+	entry, keyExists := table.entries[key]
+	if keyExists {
+		return !entry.IsDeleted, nil
+	}
+
+	return false, nil
 }
 
 func (table *MemTable) Delete(key StoreKey) error {
@@ -52,7 +58,7 @@ func (table *MemTable) Delete(key StoreKey) error {
 		return fmt.Errorf("key `%s` not found", key)
 	}
 
-	delete(table.entries, key)
+	table.entries[key].IsDeleted = true
 
 	return nil
 }
