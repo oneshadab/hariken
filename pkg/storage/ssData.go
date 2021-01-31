@@ -31,6 +31,21 @@ func newSSData(dataFilePath string) (*ssData, error) {
 	return ssData, nil
 }
 
+func (ss *ssData) ReadAt(filePos int64) (*DataFileEntry, error) {
+	_, err := ss.dataFile.Seek(filePos, os.SEEK_SET)
+	if err != nil {
+		return nil, err
+	}
+
+	entry := &DataFileEntry{}
+	err = binary.Read(ss.dataFile, binary.LittleEndian, entry)
+	if err != nil {
+		return nil, err
+	}
+
+	return entry, nil
+}
+
 func (ss *ssData) write(data []byte) error {
 	dataFileEntry := DataFileEntry{
 		dataLen: int64(len(data)),
