@@ -45,7 +45,29 @@ func (S *Store) Has(key StoreKey) (bool, error) {
 }
 
 func (S *Store) Get(key StoreKey) ([]byte, error) {
-	return S.memTable.Get(key)
+	// First look in memTable
+	found, err := S.memTable.Has(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if found {
+		return S.memTable.Get(key)
+	}
+
+	// Look for first sstable which has key
+	for _, table := range S.SSTables {
+		found, err := table.Has(key)
+		if err != nil {
+			return nil, err
+		}
+
+		if found {
+			return table.Get(key)
+		}
+	}
+
+	return nil, nil
 }
 
 func (S *Store) Set(key StoreKey, val []byte) error {

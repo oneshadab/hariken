@@ -33,6 +33,20 @@ func NewSSTable(dir string) (*SSTable, error) {
 	return table, nil
 }
 
+func (S *SSTable) Has(key StoreKey) (bool, error) {
+	indexEntry, err := S.index.Get(key)
+	if err != nil {
+		return false, err
+	}
+
+	if indexEntry == nil {
+		// No Entry found in sstable
+		return false, nil
+	}
+
+	return true, nil
+}
+
 func (S *SSTable) Get(key StoreKey) ([]byte, error) {
 	indexEntry, err := S.index.Get(key)
 	if err != nil {
