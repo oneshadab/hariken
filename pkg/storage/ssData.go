@@ -3,6 +3,8 @@ package storage
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/oneshadab/hariken/pkg/utils"
 )
 
 type ssData struct {
@@ -26,14 +28,14 @@ func newSSData(dataFilePath string) (*ssData, error) {
 	return ssData, nil
 }
 
-func (ss *ssData) ReadAt(filePos int64) (*LogEntry, error) {
+func (ss *ssData) readAt(filePos int64) (*LogEntry, error) {
 	_, err := ss.dataFile.Seek(filePos, os.SEEK_SET)
 	if err != nil {
 		return nil, err
 	}
 
 	entry := &LogEntry{}
-	err = entry.Deserialize(ss.dataFile)
+	err = utils.ReadEntry(ss.dataFile, entry)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +44,7 @@ func (ss *ssData) ReadAt(filePos int64) (*LogEntry, error) {
 }
 
 func (ss *ssData) write(entry *LogEntry) error {
-	err := entry.Serialize(ss.dataFile)
+	err := utils.WriteEntry(ss.dataFile, entry)
 	if err != nil {
 		return err
 	}

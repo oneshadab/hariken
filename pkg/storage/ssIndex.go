@@ -1,9 +1,10 @@
 package storage
 
 import (
-	"encoding/binary"
 	"os"
 	"path/filepath"
+
+	"github.com/oneshadab/hariken/pkg/utils"
 )
 
 type ssIndex struct {
@@ -11,8 +12,8 @@ type ssIndex struct {
 }
 
 type IndexFileEntry struct {
-	key         StoreKey
-	dataFilePos int64
+	Key         StoreKey
+	DataFilePos int64
 }
 
 func newSSIndex(indexFilePath string) (*ssIndex, error) {
@@ -41,12 +42,13 @@ func (ss *ssIndex) Get(key StoreKey) (*IndexFileEntry, error) {
 
 	numEntries := fileInfo.Size() / sizeofIndexEntry()
 	for i := int64(0); i < numEntries; i++ {
-		entry, err := ss.ReadAt(i * sizeofIndexEntry())
+		entry, err := ss.readAt(i * sizeofIndexEntry())
+
 		if err != nil {
 			return nil, err
 		}
 
-		if entry.key == key {
+		if entry.Key == key {
 			return entry, nil
 		}
 	}
@@ -54,14 +56,14 @@ func (ss *ssIndex) Get(key StoreKey) (*IndexFileEntry, error) {
 	return nil, nil
 }
 
-func (ss *ssIndex) ReadAt(filePos int64) (*IndexFileEntry, error) {
+func (ss *ssIndex) readAt(filePos int64) (*IndexFileEntry, error) {
 	_, err := ss.indexFile.Seek(filePos, os.SEEK_SET)
 	if err != nil {
 		return nil, err
 	}
 
 	entry := &IndexFileEntry{}
-	err = binary.Read(ss.indexFile, binary.LittleEndian, entry)
+	err = utils.ReadEntry(ss.indexFile, entry)
 	if err != nil {
 		return nil, err
 	}
@@ -70,12 +72,12 @@ func (ss *ssIndex) ReadAt(filePos int64) (*IndexFileEntry, error) {
 }
 
 func (ss ssIndex) write(key StoreKey, dataFilePos int64) error {
-	indexEntry := IndexFileEntry{
-		key:         key,
-		dataFilePos: dataFilePos,
+	indexEntry := &IndexFileEntry{
+		Key:         key,
+		DataFilePos: dataFilePos,
 	}
 
-	_, err := ss.indexFile.Write(indexEntry.Bytes())
+	err := utils.WriteEntry(ss.indexFile, indexEntry)
 	if err != nil {
 		return err
 	}
@@ -83,18 +85,6 @@ func (ss ssIndex) write(key StoreKey, dataFilePos int64) error {
 	return nil
 }
 
-func (e *IndexFileEntry) Bytes() []byte {
-	var buf [16]byte
-
-	// First 8 bytes are the key
-	copy(buf[:], e.key[:])
-
-	// Next 8 bytes are the Position
-	binary.LittleEndian.PutUint64(buf[8:], uint64(e.dataFilePos))
-
-	return buf[:]
-}
-
 func sizeofIndexEntry() int64 {
-	return 16
+	return 20
 }

@@ -58,7 +58,7 @@ func (S *SSTable) Get(key StoreKey) (*LogEntry, error) {
 		return nil, nil
 	}
 
-	logEntry, err := S.data.ReadAt(indexEntry.dataFilePos)
+	logEntry, err := S.data.readAt(indexEntry.DataFilePos)
 	if err != nil {
 		return nil, err
 	}
@@ -89,11 +89,11 @@ func (S *SSTable) Build(mt *MemTable) error {
 		}
 
 		// Write corresponding data entry
-		data, err := mt.Get(key)
+		entry, err := mt.Get(key)
 		if err != nil {
 			return err
 		}
-		err = S.data.write(data)
+		err = S.data.write(entry)
 		if err != nil {
 			return err
 		}
