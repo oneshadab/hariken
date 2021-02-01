@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/oneshadab/hariken/pkg/storage"
-	"github.com/oneshadab/hariken/pkg/utils"
 )
 
 // Todo: Find something better than this
@@ -43,7 +42,7 @@ func LoadTable(tableDir string) (*Table, error) {
 }
 
 func (T *Table) Get(rowId string) (*Row, error) {
-	rowKey, err := utils.ParseKey(rowId)
+	rowKey, err := storage.ParseKey(rowId)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +85,7 @@ func (T *Table) Insert(entries map[string]string) (*Row, error) {
 		return nil, err
 	}
 
-	rowKey, err := utils.ParseKey(row.Id())
+	rowKey, err := storage.ParseKey(row.Id())
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +121,7 @@ func (T *Table) Update(rowId string, entries map[string]string) (*Row, error) {
 		return nil, err
 	}
 
-	rowKey, err := utils.ParseKey(row.Id())
+	rowKey, err := storage.ParseKey(row.Id())
 	if err != nil {
 		return nil, err
 	}
@@ -136,7 +135,7 @@ func (T *Table) Update(rowId string, entries map[string]string) (*Row, error) {
 }
 
 func (T *Table) Delete(rowId string) error {
-	rowKey, err := utils.ParseKey(rowId)
+	rowKey, err := storage.ParseKey(rowId)
 	if err != nil {
 		return err
 	}

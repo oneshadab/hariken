@@ -1,5 +1,10 @@
 package storage
 
+import (
+	"encoding/binary"
+	"strconv"
+)
+
 const (
 	storeKeyLen = 8
 )
@@ -13,6 +18,19 @@ func (key StoreKey) isLess(otherKey StoreKey) bool {
 		}
 	}
 	return false
+}
+
+func ParseKey(s string) (StoreKey, error) {
+	var key StoreKey
+
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return key, err
+	}
+
+	var buf [8]byte
+	binary.BigEndian.PutUint64(buf[:], uint64(n))
+	return key, nil
 }
 
 func (key StoreKey) bytes() []byte {
