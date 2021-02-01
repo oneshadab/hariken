@@ -2,6 +2,7 @@ package storage
 
 import (
 	"os"
+	"path/filepath"
 )
 
 type ssData struct {
@@ -9,12 +10,12 @@ type ssData struct {
 }
 
 func newSSData(dataFilePath string) (*ssData, error) {
-	err := os.MkdirAll(dataFilePath, os.ModePerm)
+	err := os.MkdirAll(filepath.Dir(dataFilePath), os.ModePerm)
 	if err != nil {
 		return nil, err
 	}
 
-	dataFile, err := os.Open(dataFilePath)
+	dataFile, err := os.OpenFile(dataFilePath, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return nil, err
 	}
