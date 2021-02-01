@@ -17,6 +17,11 @@ func NewSSTableGroup(dirPath string) (*SSTableGroup, error) {
 		dirPath: dirPath,
 	}
 
+	err := tableGroup.loadSSTables()
+	if err != nil {
+		return nil, err
+	}
+
 	return tableGroup, nil
 }
 
@@ -64,3 +69,26 @@ func (g *SSTableGroup) genNewSSTable(mt *MemTable) (*SSTable, error) {
 	return table, nil
 }
 
+func (g *SSTableGroup) loadSSTables() error {
+	tableFiles, err := ioutil.ReadDir(g.dirPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			// Directory empty so nothing to load
+			return nil
+		}
+		return err
+	}
+
+	g.tables = make([]*SSTable, 0)
+
+	for _, tableFile := range tableFiles {
+		table, err := NewSSTable(path.Join(g.dirPath, tableFile.Name()))
+		if err != nil {
+			return err
+		}
+
+		g.tables = append(g.tables, table)
+	}
+
+	return nil
+}

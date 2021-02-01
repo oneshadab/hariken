@@ -77,7 +77,7 @@ func TestFlush(t *testing.T) {
 		value: []byte("john"),
 	}
 
-	storeDir := "temp/test"
+	storeDir := t.TempDir()
 
 	store, err := NewStore(storeDir)
 	if err != nil {
