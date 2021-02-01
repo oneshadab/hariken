@@ -39,7 +39,7 @@ func NewClient(cfg *Config) (*Client, error) {
 }
 
 func (C *Client) StartShell() error {
-	defer func(){
+	defer func() {
 		err := C.conn.Close()
 		if err != nil {
 			log.Fatal(err)

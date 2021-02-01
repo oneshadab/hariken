@@ -39,7 +39,7 @@ func (server *Server) WaitForConnections() {
 
 		// Start new session in new thread
 		go func() {
-			defer func(){
+			defer func() {
 				err = conn.Close()
 				if err != nil {
 					log.Fatal(err)
