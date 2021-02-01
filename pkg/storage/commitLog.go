@@ -4,6 +4,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+
+	"github.com/oneshadab/hariken/pkg/utils"
 )
 
 type CommitLog struct {
@@ -29,7 +31,7 @@ func NewCommitLog(path string) (*CommitLog, error) {
 }
 
 func (cl *CommitLog) Write(entry *LogEntry) error {
-	err := entry.Serialize(cl.logFile)
+	err := utils.WriteEntry(cl.logFile, entry)
 
 	if err != nil {
 		return err
@@ -41,7 +43,7 @@ func (cl *CommitLog) Write(entry *LogEntry) error {
 func (cl *CommitLog) Read() (*LogEntry, error) {
 	var entry LogEntry
 
-	err := entry.Deserialize(cl.logFile)
+	err := utils.ReadEntry(cl.logFile, &entry)
 
 	if err != nil {
 		if err == io.EOF {
@@ -54,20 +56,21 @@ func (cl *CommitLog) Read() (*LogEntry, error) {
 }
 
 func (cl *CommitLog) Reset() error {
-	_, err := cl.logFile.Seek(0, os.SEEK_SET)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (cl *CommitLog) Flush() error {
-	err := cl.Reset()
+	err := cl.SeekToStart()
 	if err != nil {
 		return err
 	}
 
 	err = cl.logFile.Truncate(0)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (cl *CommitLog) SeekToStart() error {
+	_, err := cl.logFile.Seek(0, os.SEEK_SET)
 	if err != nil {
 		return err
 	}
