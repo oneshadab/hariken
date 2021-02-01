@@ -17,6 +17,16 @@ func (table *MemTable) Get(key StoreKey) (*LogEntry, error) {
 	return table.entries[key], nil
 }
 
+func (table *MemTable) GetAll() ([][]byte, error) {
+	rows := make([][]byte, 0)
+
+	for _, value := range table.entries {
+		rows = append(rows, value)
+	}
+
+	return rows, nil
+}
+
 func (table *MemTable) Set(key StoreKey, entry *LogEntry) error {
 	table.entries[key] = entry
 	return nil
