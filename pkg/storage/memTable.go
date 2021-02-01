@@ -34,3 +34,8 @@ func (table *MemTable) Keys() ([]StoreKey, error) {
 	}
 	return keys, nil
 }
+
+func (table *MemTable) Reset() error {
+	table.entries = make(map[StoreKey]*LogEntry)
+	return nil
+}
