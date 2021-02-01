@@ -2,32 +2,30 @@ package storage
 
 import (
 	"path"
-	"strconv"
 )
 
 // A Generic Persistent Key-Value store
 type Store struct {
-	dir string // Todo: use something better
-
-	memTable  *MemTable
-	commitLog *CommitLog
-
-	SSTables []*SSTable // List of sstables, youngest to oldest
+	memTable     *MemTable
+	commitLog    *CommitLog
+	sstableGroup *SSTableGroup
 }
 
 func NewStore(dir string) (*Store, error) {
 	var err error
-	store := &Store{
-		dir: dir,
-	}
+	store := &Store{}
 
-	commitLogPath := path.Join(dir, "commitLog")
-	store.commitLog, err = NewCommitLog(commitLogPath)
+	store.memTable, err = NewMemTable()
 	if err != nil {
 		return nil, err
 	}
 
-	store.memTable, err = NewMemTable()
+	store.commitLog, err = NewCommitLog(path.Join(dir, "commitLog"))
+	if err != nil {
+		return nil, err
+	}
+
+	store.sstableGroup, err = NewSSTableGroup(path.Join(dir, "ssTables"))
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +105,8 @@ func (S *Store) Delete(key StoreKey) error {
 }
 
 func (S *Store) Flush() error {
-	// Create new SSTable from commit log
-	sstable, err := S.genNewSSTable()
+	// Add new SSTable from commitlog/memtable
+	err := S.sstableGroup.addNew(S.memTable)
 	if err != nil {
 		return err
 	}
@@ -119,14 +117,11 @@ func (S *Store) Flush() error {
 		return err
 	}
 
-	// Load memtable from commit log
+	// Sync memtable with commit log
 	err = S.syncMemtableWithLog()
 	if err != nil {
 		return err
 	}
-
-	// Add sstable to list of sstables
-	S.SSTables = append([]*SSTable{sstable}, S.SSTables...)
 
 	return nil
 }
@@ -161,7 +156,7 @@ func (S *Store) syncMemtableWithLog() error {
 }
 
 func (S *Store) find(key StoreKey) (*LogEntry, error) {
-	// First look in memTable
+	// First look for the key in the memTable
 	found, err := S.memTable.hasKey(key)
 	if err != nil {
 		return nil, err
@@ -171,34 +166,6 @@ func (S *Store) find(key StoreKey) (*LogEntry, error) {
 		return S.memTable.Get(key)
 	}
 
-	// Then look for youngest sstable which has key
-	for _, table := range S.SSTables {
-		found, err := table.hasKey(key)
-		if err != nil {
-			return nil, err
-		}
-
-		if found {
-			return table.Get(key)
-		}
-	}
-
-	return nil, nil
-}
-
-func (S *Store) genNewSSTable() (*SSTable, error) {
-	tableId := strconv.Itoa(len(S.SSTables))
-	ssTableDir := path.Join(S.dir, "ssTables", tableId)
-
-	table, err := NewSSTable(ssTableDir)
-	if err != nil {
-		return nil, err
-	}
-
-	err = table.Build(S.memTable)
-	if err != nil {
-		return nil, err
-	}
-
-	return table, nil
+	// Next look for the key in the ssTables
+	return S.sstableGroup.find(key)
 }
