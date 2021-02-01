@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/binary"
 	"os"
+	"path/filepath"
 )
 
 type ssIndex struct {
@@ -15,12 +16,12 @@ type IndexFileEntry struct {
 }
 
 func newSSIndex(indexFilePath string) (*ssIndex, error) {
-	err := os.MkdirAll(indexFilePath, os.ModePerm)
+	err := os.MkdirAll(filepath.Dir(indexFilePath), os.ModePerm)
 	if err != nil {
 		return nil, err
 	}
 
-	indexFile, err := os.Open(indexFilePath)
+	indexFile, err := os.OpenFile(indexFilePath, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
 		return nil, err
 	}
