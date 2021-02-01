@@ -29,7 +29,7 @@ func (table *MemTable) hasKey(key StoreKey) (bool, error) {
 
 func (table *MemTable) Keys() ([]StoreKey, error) {
 	keys := make([]StoreKey, 0, len(table.entries))
-	for k, _ := range table.entries {
+	for k := range table.entries {
 		keys = append(keys, k)
 	}
 	return keys, nil
