@@ -103,8 +103,6 @@ func (S *Store) Delete(key StoreKey) error {
 		return err
 	}
 
-	S.syncMemtableWithLog()
-
 	return nil
 }
 
@@ -116,7 +114,7 @@ func (S *Store) Flush() error {
 	}
 
 	// Clear the commit log
-	err = S.commitLog.Flush()
+	err = S.commitLog.Reset()
 	if err != nil {
 		return err
 	}
@@ -134,7 +132,12 @@ func (S *Store) Flush() error {
 }
 
 func (S *Store) syncMemtableWithLog() error {
-	err := S.memTable.Reset()
+	err := S.commitLog.SeekToStart()
+	if err != nil {
+		return err
+	}
+
+	err = S.memTable.Reset()
 	if err != nil {
 		return err
 	}
