@@ -77,7 +77,7 @@ func (ss ssIndex) write(key StoreKey, dataFilePos int64) error {
 		DataFilePos: dataFilePos,
 	}
 
-	err := utils.WriteEntry(ss.indexFile, indexEntry)
+	err := utils.WriteFixedWidthEntry(ss.indexFile, indexEntry, int32(sizeofIndexEntry()))
 	if err != nil {
 		return err
 	}
@@ -86,5 +86,5 @@ func (ss ssIndex) write(key StoreKey, dataFilePos int64) error {
 }
 
 func sizeofIndexEntry() int64 {
-	return 20
+	return 200
 }
