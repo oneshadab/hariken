@@ -112,7 +112,7 @@ func (S *Store) Flush() error {
 	}
 
 	// Clear the commit log
-	err = S.commitLog.Reset()
+	err = S.commitLog.Clear()
 	if err != nil {
 		return err
 	}
@@ -132,7 +132,7 @@ func (S *Store) syncMemtableWithLog() error {
 		return err
 	}
 
-	err = S.memTable.Reset()
+	err = S.memTable.Clear()
 	if err != nil {
 		return err
 	}
