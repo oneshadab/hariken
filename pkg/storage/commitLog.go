@@ -55,7 +55,7 @@ func (cl *CommitLog) Read() (*LogEntry, error) {
 	return &entry, nil
 }
 
-func (cl *CommitLog) Reset() error {
+func (cl *CommitLog) Clear() error {
 	err := cl.SeekToStart()
 	if err != nil {
 		return err
