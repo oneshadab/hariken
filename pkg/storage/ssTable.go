@@ -39,12 +39,7 @@ func (S *SSTable) hasKey(key StoreKey) (bool, error) {
 		return false, err
 	}
 
-	if indexEntry == nil {
-		// No Entry found in sstable
-		return false, nil
-	}
-
-	return true, nil
+	return indexEntry != nil, nil
 }
 
 func (S *SSTable) Get(key StoreKey) (*LogEntry, error) {
@@ -54,7 +49,7 @@ func (S *SSTable) Get(key StoreKey) (*LogEntry, error) {
 	}
 
 	if indexEntry == nil {
-		// No Entry found in sstable
+		// No entry found in index
 		return nil, nil
 	}
 

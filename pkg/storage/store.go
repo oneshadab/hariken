@@ -6,9 +6,9 @@ import (
 
 // A Generic Persistent Key-Value store
 type Store struct {
-	memTable     *MemTable
-	commitLog    *CommitLog
-	sstableGroup *SSTableGroup
+	memTable  *MemTable
+	commitLog *CommitLog
+	ssTables  *SSTableGroup
 }
 
 func NewStore(dir string) (*Store, error) {
@@ -25,7 +25,7 @@ func NewStore(dir string) (*Store, error) {
 		return nil, err
 	}
 
-	store.sstableGroup, err = NewSSTableGroup(path.Join(dir, "ssTables"))
+	store.ssTables, err = NewSSTableGroup(path.Join(dir, "ssTables"))
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func (S *Store) Delete(key StoreKey) error {
 
 func (S *Store) Flush() error {
 	// Add new SSTable from commitlog/memtable
-	err := S.sstableGroup.addNew(S.memTable)
+	err := S.ssTables.addNew(S.memTable)
 	if err != nil {
 		return err
 	}
@@ -167,5 +167,5 @@ func (S *Store) find(key StoreKey) (*LogEntry, error) {
 	}
 
 	// Next look for the key in the ssTables
-	return S.sstableGroup.find(key)
+	return S.ssTables.find(key)
 }
