@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/gob"
+	"fmt"
 	"io"
 )
 
@@ -19,8 +20,30 @@ func WriteEntry(writer io.Writer, entry interface{}) error {
 	}
 	payload := buf.Bytes()
 
+	return WritePayload(writer, payload)
+}
+
+func WriteFixedWidthEntry(writer io.Writer, entry interface{}, width int32) error {
+	// Create payload from entry
+	buf := bytes.NewBuffer(make([]byte, 0, width))
+	err := gob.NewEncoder(io.Writer(buf)).Encode(entry)
+	if err != nil {
+		return err
+	}
+	payload := buf.Bytes()
+
+	if int32(len(payload)) > width {
+		return fmt.Errorf("size of payload is larger than width specified")
+	}
+
+	// Pad with 0, leave 4 bytes for the payloadSize
+	payload = payload[:width-4]
+	return WritePayload(writer, payload)
+}
+
+func WritePayload(writer io.Writer, payload []byte) error {
 	// First write the length of the payload
-	err = binary.Write(writer, byteOrder, int32(len(payload)))
+	err := binary.Write(writer, byteOrder, int32(len(payload)))
 	if err != nil {
 		return err
 	}
