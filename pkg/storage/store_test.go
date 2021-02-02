@@ -69,14 +69,19 @@ func TestPersistence(t *testing.T) {
 }
 
 func TestFlush(t *testing.T) {
-	testData := struct {
+	testData := []struct {
 		key   StoreKey
 		value []byte
 	}{
-		key:   StoreKey{7},
-		value: []byte("john"),
+		{
+			key:   StoreKey{7},
+			value: []byte("john"),
+		},
+		{
+			key:   StoreKey{5},
+			value: []byte("ron"),
+		},
 	}
-
 	storeDir := t.TempDir()
 
 	store, err := NewStore(storeDir)
@@ -85,7 +90,12 @@ func TestFlush(t *testing.T) {
 	}
 
 	// Part 1: Test if flushed value can be accessed
-	err = store.Set(testData.key, testData.value)
+	err = store.Set(testData[0].key, testData[0].value)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = store.Set(testData[1].key, testData[1].value)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,17 +114,17 @@ func TestFlush(t *testing.T) {
 		t.Fatalf("Commit log not flushed")
 	}
 
-	value, err := store.Get(testData.key)
+	value, err := store.Get(testData[0].key)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !bytes.Equal(testData.value, value) {
-		t.Fatalf("Expected %v got %v", testData.value, value)
+	if !bytes.Equal(testData[0].value, value) {
+		t.Fatalf("Expected %v got %v", testData[0].value, value)
 	}
 
 	// Part 2: Test if flushed deleted value is properly removed
-	err = store.Delete(testData.key)
+	err = store.Delete(testData[0].key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,7 +134,7 @@ func TestFlush(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	hasValue, err := store.Has(testData.key)
+	hasValue, err := store.Has(testData[0].key)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -134,17 +144,17 @@ func TestFlush(t *testing.T) {
 	}
 
 	// Part 3: Test if non-flushed values are accessed properly
-	err = store.Set(testData.key, testData.value)
+	err = store.Set(testData[0].key, testData[0].value)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	value, err = store.Get(testData.key)
+	value, err = store.Get(testData[0].key)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !bytes.Equal(testData.value, value) {
-		t.Fatalf("Expected %v got %v", testData.value, value)
+	if !bytes.Equal(testData[0].value, value) {
+		t.Fatalf("Expected %v got %v", testData[0].value, value)
 	}
 }
