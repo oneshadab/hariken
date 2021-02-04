@@ -28,8 +28,7 @@ func ParseKey(s string) (StoreKey, error) {
 		return key, err
 	}
 
-	var buf [8]byte
-	binary.BigEndian.PutUint64(buf[:], uint64(n))
+	binary.BigEndian.PutUint64(key[:], uint64(n))
 	return key, nil
 }
 
