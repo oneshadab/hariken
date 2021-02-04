@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"os"
 	"strings"
@@ -39,12 +38,8 @@ func NewClient(cfg *Config) (*Client, error) {
 }
 
 func (C *Client) StartShell() error {
-	defer func() {
-		err := C.conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
+	// Todo: Handle error for C.conn.Close() gracefully
+	defer C.conn.Close()
 
 	fmt.Println("Hariken shell version v0.1")
 	for {
