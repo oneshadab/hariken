@@ -196,28 +196,42 @@ func (T *Table) AddColumn(colName string) error {
 	return nil
 }
 
-func (T *Table) NextId() (string, error) {
+func (T *Table) GetLastUsedId() (string, error) {
 	idData, err := T.metaDataStore.Get(metadataKeys.lastUsedId)
 	if err != nil {
 		return "", err
 	}
 
-	idStr := string(idData)
 	if idData == nil {
-		idStr = "0"
+		return "", nil
 	}
 
-	lastUsedId, err := strconv.Atoi(idStr)
+	return string(idData), nil
+}
+
+func (T *Table) NextId() (string, error) {
+	lastUsedIdStr, err := T.GetLastUsedId()
 	if err != nil {
 		return "", err
 	}
-	lastUsedId++
 
-	newIdStr := strconv.Itoa(lastUsedId)
+	var newId int
+	if lastUsedIdStr == "" {
+		newId = 0
+	} else {
+		lastUsedId, err := strconv.Atoi(lastUsedIdStr)
+		if err != nil {
+			return "", err
+		}
+
+		newId = lastUsedId + 1
+	}
+
+	newIdStr := strconv.Itoa(newId)
 	err = T.metaDataStore.Set(metadataKeys.lastUsedId, []byte(newIdStr))
 	if err != nil {
 		return "", nil
 	}
 
-	return idStr, nil
+	return newIdStr, nil
 }
