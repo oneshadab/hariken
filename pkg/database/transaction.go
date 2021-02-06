@@ -31,7 +31,7 @@ func (tx *Transaction) FetchAll() {
 	}
 
 	lastUsedIdStr, err := tx.Table.GetLastUsedId()
-	if (err != nil) {
+	if err != nil {
 		return
 	}
 	
@@ -48,11 +48,13 @@ func (tx *Transaction) FetchAll() {
 		idStr := strconv.Itoa(id)
 		var row *Row
 		row, tx.Err = tx.Table.Get(idStr)
-		if (tx.Err != nil) {
+		if tx.Err != nil {
 			return
 		}
 
-		tx.Result = append(tx.Result, row)
+		if row != nil {
+			tx.Result = append(tx.Result, row)
+		}
 	}
 }
 
