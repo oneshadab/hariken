@@ -64,10 +64,6 @@ func (S *Store) Get(key StoreKey) ([]byte, error) {
 	return entry.Data, nil
 }
 
-func (S *Store) GetAll() ([]*LogEntry, error) {
-	return S.memTable.GetAll()
-}
-
 func (S *Store) Set(key StoreKey, val []byte) error {
 	entry := &LogEntry{
 		Key:       key,

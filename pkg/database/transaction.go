@@ -1,5 +1,9 @@
 package database
 
+import(
+	"strconv"
+)
+
 // Todo: Add type for QueryResult and return cursor
 type QueryResult [](*Row)
 
@@ -17,6 +21,39 @@ func (tx *Transaction) UseTable(tableName string) {
 	}
 
 	tx.Table, tx.Err = tx.db.Table(tableName)
+}
+
+func (tx *Transaction) FetchAll() {
+	tx.Result = QueryResult{}
+
+	if tx.Err != nil {
+		return
+	}
+
+	lastUsedIdStr, err := tx.Table.GetLastUsedId()
+	if (err != nil) {
+		return
+	}
+	
+	if lastUsedIdStr == "" {
+		return
+	}
+
+	lastUsedId, err := strconv.Atoi(lastUsedIdStr)
+	if err != nil {
+		return
+	}
+
+	for id := 0; id <= lastUsedId; id++ {
+		idStr := strconv.Itoa(id)
+		var row *Row
+		row, tx.Err = tx.Table.Get(idStr)
+		if (tx.Err != nil) {
+			return
+		}
+
+		tx.Result = append(tx.Result, row)
+	}
 }
 
 func (tx *Transaction) FetchRow(rowId string) {
