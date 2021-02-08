@@ -1,6 +1,6 @@
 package database
 
-import(
+import (
 	"strconv"
 )
 
@@ -8,9 +8,10 @@ import(
 type QueryResult [](*Row)
 
 type Transaction struct {
-	Result QueryResult
-	Err    error // Query will fall-through on error
-	Table  *Table
+	Result                QueryResult
+	Err                   error // Query will fall-through on error
+	Table                 *Table
+	ProcessedCommandTypes map[string]bool
 
 	db *Database
 }
@@ -34,7 +35,7 @@ func (tx *Transaction) FetchAll() {
 	if err != nil {
 		return
 	}
-	
+
 	if lastUsedIdStr == "" {
 		return
 	}
@@ -69,21 +70,31 @@ func (tx *Transaction) FetchRow(rowId string) {
 	tx.Result = QueryResult{row}
 }
 
-func (tx *Transaction) UpsertRow(entries map[string]string) {
+func (tx *Transaction) InsertRow(entries map[string]string) {
 	if tx.Err != nil {
 		return
 	}
 
 	var row *Row
-
-	rowId, rowIdExists := entries["id"]
-	if rowIdExists {
-		row, tx.Err = tx.Table.Update(rowId, entries)
-	} else {
-		row, tx.Err = tx.Table.Insert(entries)
-	}
+	row, tx.Err = tx.Table.Insert(entries)
 
 	tx.Result = QueryResult{row}
+}
+
+func (tx *Transaction) Filter(key string, expectedValue string) {
+	if tx.Err != nil {
+		return
+	}
+
+	filteredResult := QueryResult{}
+	for _, row := range tx.Result {
+		rowValue, _ := row.Column[key]
+		if rowValue == expectedValue {
+			filteredResult = append(filteredResult, row)
+		}
+	}
+
+	tx.Result = filteredResult
 }
 
 func (tx *Transaction) DeleteRow(rowId string) {
