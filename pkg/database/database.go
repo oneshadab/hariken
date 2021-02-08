@@ -36,7 +36,8 @@ func (db *Database) Table(tableName string) (*Table, error) {
 
 func (db *Database) NewTransaction() *Transaction {
 	tx := &Transaction{
-		db: db,
+		db:                    db,
+		ProcessedCommandTypes: make(map[string]bool),
 	}
 	return tx
 }
