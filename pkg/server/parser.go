@@ -1,7 +1,6 @@
 package server
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -41,7 +40,7 @@ func ExecCommand(query string, commandHandlers map[string]interface{}) (string, 
 
 		case "USE":
 			if len(args) > 1 || len(tx.ProcessedCommandTypes) > 0 {
-				return "", errors.New("invalid command")
+				return fmt.Sprintf("Invalid syntax for `%s`", cmd), nil
 			}
 
 			dbName := args[0]
@@ -53,7 +52,7 @@ func ExecCommand(query string, commandHandlers map[string]interface{}) (string, 
 
 		case "INSERT":
 			if len(args) <= 1 {
-				return "", errors.New("invalid command")
+				return fmt.Sprintf("Invalid syntax for `%s`", cmd), nil
 			}
 
 			tableName := args[0]
@@ -71,7 +70,7 @@ func ExecCommand(query string, commandHandlers map[string]interface{}) (string, 
 
 		case "GET":
 			if len(args) > 1 {
-				return "", errors.New("invalid command")
+				return fmt.Sprintf("Invalid syntax for `%s`", cmd), nil
 			}
 
 			tableName := args[0]
@@ -85,7 +84,7 @@ func ExecCommand(query string, commandHandlers map[string]interface{}) (string, 
 
 		case "UPDATE":
 			if len(args) == 0 {
-				return "", errors.New("invalid command")
+				return fmt.Sprintf("Invalid syntax for `%s`", cmd), nil
 			}
 
 			entries := make(map[string]string)
@@ -100,7 +99,7 @@ func ExecCommand(query string, commandHandlers map[string]interface{}) (string, 
 
 		case "FILTER":
 			if len(args) == 0 {
-				return "", errors.New("invalid command")
+				return fmt.Sprintf("Invalid syntax for `%s`", cmd), nil
 			}
 
 			for _, entry := range args {
