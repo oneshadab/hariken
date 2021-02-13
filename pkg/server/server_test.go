@@ -41,29 +41,29 @@ func TestServer(t *testing.T) {
 		expectedResult string
 	}{
 		{
-			command:        fmt.Sprintf("GET %s %s", tData[0].tableName, tData[0].id),
-			expectedResult: "nil",
+			command: fmt.Sprintf("GET %s", tData[0].tableName),
+			expectedResult: utils.GenerateTable(
+				[]string{"id"},
+				[]map[string]string{}),
 		},
 		{
-			command: fmt.Sprintf("UPSERT %s name=%s", tData[0].tableName, tData[0].name),
+			command:        fmt.Sprintf("Insert %s name=%s", tData[0].tableName, tData[0].name),
+			expectedResult: "OK",
+		},
+		{
+			command: fmt.Sprintf("GET %s", tData[0].tableName),
 			expectedResult: utils.GenerateTable(
 				[]string{"id", "name"},
 				[]map[string]string{{"id": tData[0].id, "name": tData[0].name}}),
 		},
 		{
-			command: fmt.Sprintf("GET %s %s", tData[0].tableName, tData[0].id),
-			expectedResult: utils.GenerateTable(
-				[]string{"id", "name"},
-				[]map[string]string{{"id": tData[0].id, "name": tData[0].name}}),
-		},
-		{
-			command: fmt.Sprintf("UPSERT %s id=%s age=%s", tData[0].tableName, tData[0].id, tData[0].age),
+			command: fmt.Sprintf("GET %s | FILTER id=%s | UPDATE age=%s", tData[0].tableName, tData[0].id, tData[0].age),
 			expectedResult: utils.GenerateTable(
 				[]string{"id", "name", "age"},
 				[]map[string]string{{"id": tData[0].id, "name": tData[0].name, "age": tData[0].age}}),
 		},
 		{
-			command: fmt.Sprintf("GET %s %s", tData[0].tableName, tData[0].id),
+			command: fmt.Sprintf("GET %s | FILTER id=%s", tData[0].tableName, tData[0].id),
 			expectedResult: utils.GenerateTable(
 				[]string{"id", "name", "age"},
 				[]map[string]string{{"id": tData[0].id, "name": tData[0].name, "age": tData[0].age}})},
@@ -72,26 +72,29 @@ func TestServer(t *testing.T) {
 			expectedResult: "OK",
 		},
 		{
-			command:        fmt.Sprintf("GET %s %s", tData[1].tableName, tData[0].id),
-			expectedResult: "nil",
+			command: fmt.Sprintf("GET %s | FILTER id=%s", tData[1].tableName, tData[0].id),
+			expectedResult: utils.GenerateTable(
+				[]string{"id"},
+				[]map[string]string{}),
 		},
 		{
-			command: fmt.Sprintf("Upsert %s name=%s", tData[1].tableName, tData[1].name),
-			expectedResult: utils.GenerateTable(
-				[]string{"id", "name"},
-				[]map[string]string{{"id": tData[1].id, "name": tData[1].name}})},
-		{
-			command: fmt.Sprintf("GET %s %s", tData[1].tableName, tData[1].id),
-			expectedResult: utils.GenerateTable(
-				[]string{"id", "name"},
-				[]map[string]string{{"id": tData[1].id, "name": tData[1].name}})},
-		{
-			command:        fmt.Sprintf("DELETE %s %s", tData[1].tableName, tData[1].id),
+			command:        fmt.Sprintf("Insert %s name=%s", tData[1].tableName, tData[1].name),
 			expectedResult: "OK",
 		},
 		{
-			command:        fmt.Sprintf("GET %s %s", tData[1].tableName, tData[1].id),
-			expectedResult: "nil",
+			command: fmt.Sprintf("GET %s", tData[1].tableName),
+			expectedResult: utils.GenerateTable(
+				[]string{"id", "name"},
+				[]map[string]string{{"id": tData[1].id, "name": tData[1].name}})},
+		{
+			command:        fmt.Sprintf("GET %s | FILTER id=%s | DELETE", tData[1].tableName, tData[1].id),
+			expectedResult: "OK",
+		},
+		{
+			command: fmt.Sprintf("GET %s", tData[1].tableName),
+			expectedResult: utils.GenerateTable(
+				[]string{"id", "name"},
+				[]map[string]string{}),
 		},
 		{
 			command:        "INVALIDCOMMMAND",
