@@ -2,12 +2,10 @@ package server
 
 import (
 	"bufio"
-	"fmt"
 	"strings"
 
 	"github.com/oneshadab/hariken/pkg/database"
 	"github.com/oneshadab/hariken/pkg/protocol"
-	"github.com/oneshadab/hariken/pkg/utils"
 )
 
 type Session struct {
@@ -47,7 +45,13 @@ func (S *Session) Start(reader *bufio.Reader, writer *bufio.Writer) error {
 
 func (S *Session) Exec(query string) (string, error) {
 	query = strings.TrimSuffix(query, "\n")
-	return ExecCommand(S, query)
+
+	commandHandlers := map[string]interface{}{
+		"startTransaction": S.db.NewTransaction,
+		"useDatabase":      S.useDatabase,
+	}
+
+	return ExecCommand(query, commandHandlers)
 }
 
 func (S *Session) useDatabase(dbName string) error {

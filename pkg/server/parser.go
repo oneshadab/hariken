@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/oneshadab/hariken/pkg/database"
 	"github.com/oneshadab/hariken/pkg/utils"
 )
 
@@ -20,8 +21,8 @@ func tokenize(cmd string) ([]string, error) {
 	return tokens, nil
 }
 
-func ExecCommand(S *Session, query string) (string, error) {
-	tx := S.db.NewTransaction()
+func ExecCommand(query string, commandHandlers map[string]interface{}) (string, error) {
+	tx := commandHandlers["startTransaction"].(func() *database.Transaction)()
 	tokens, err := tokenize(query)
 
 	if err != nil {
@@ -32,8 +33,9 @@ func ExecCommand(S *Session, query string) (string, error) {
 
 	for _, token := range tokens {
 		parts := strings.Split(token, " ")
-		cmd := strings.ToUpper(parts[0])
 		args := parts[1:]
+
+		cmd := strings.ToUpper(parts[0])
 
 		switch cmd {
 
@@ -43,7 +45,8 @@ func ExecCommand(S *Session, query string) (string, error) {
 			}
 
 			dbName := args[0]
-			err := S.useDatabase(dbName)
+			err := commandHandlers["useDatabase"].(func(string) error)(dbName)
+
 			if err != nil {
 				return "", err
 			}
@@ -63,7 +66,6 @@ func ExecCommand(S *Session, query string) (string, error) {
 				entries[key] = val
 			}
 
-			tx := S.db.NewTransaction()
 			tx.UseTable(tableName)
 			tx.InsertRow(entries)
 
