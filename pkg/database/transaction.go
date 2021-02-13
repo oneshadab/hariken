@@ -97,6 +97,19 @@ func (tx *Transaction) Filter(key string, expectedValue string) {
 	tx.Result = filteredResult
 }
 
+func (tx *Transaction) UpdateAll(entries map[string]string) {
+	if tx.Err != nil {
+		return
+	}
+
+	for _, row := range tx.Result {
+		tx.Table.Update(row.Id(), entries)
+		for k, v := range entries {
+			row.Column[k] = v
+		}
+	}
+}
+
 func (tx *Transaction) DeleteRow(rowId string) {
 	if tx.Err != nil {
 		return
