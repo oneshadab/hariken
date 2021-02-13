@@ -83,6 +83,21 @@ func ExecCommand(query string, commandHandlers map[string]interface{}) (string, 
 				tx.DeleteRow(row.Id())
 			}
 
+		case "UPDATE":
+			if len(args) == 0 {
+				return "", errors.New("invalid command")
+			}
+
+			entries := make(map[string]string)
+			for _, entry := range args {
+				parts := strings.Split(entry, "=")
+				key := parts[0]
+				val := parts[1]
+				entries[key] = val
+
+				tx.UpdateAll(entries)
+			}
+
 		case "FILTER":
 			if len(args) == 0 {
 				return "", errors.New("invalid command")
