@@ -102,10 +102,10 @@ func (tx *Transaction) UpdateAll(entries map[string]string) {
 		return
 	}
 
-	for _, row := range tx.Result {
-		tx.Table.Update(row.Id(), entries)
-		for k, v := range entries {
-			row.Column[k] = v
+	for i := range tx.Result {
+		tx.Result[i], tx.Err = tx.Table.Update(tx.Result[i].Id(), entries)
+		if tx.Err != nil {
+			return
 		}
 	}
 }
