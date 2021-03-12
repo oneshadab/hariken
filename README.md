@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://user-images.githubusercontent.com/29172543/110962237-f1bee380-837a-11eb-91ad-1319657c7dc0.png" width="75" alt="accessibility text">
+</p>
+
 # Hariken
 
 ## Install
