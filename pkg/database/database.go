@@ -1,6 +1,10 @@
 package database
 
-import "path/filepath"
+import (
+	"path/filepath"
+
+	"github.com/google/uuid"
+)
 
 type Database struct {
 	tableCache      map[string](*Table)
@@ -36,6 +40,7 @@ func (db *Database) Table(tableName string) (*Table, error) {
 
 func (db *Database) NewTransaction() *Transaction {
 	tx := &Transaction{
+		Id:                    uuid.NewString(),
 		db:                    db,
 		ProcessedCommandTypes: make(map[string]bool),
 	}
