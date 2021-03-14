@@ -18,6 +18,7 @@ func LoadDatabase(dbDir string) (*Database, error) {
 	db := Database{
 		storageLocation: dbDir,
 		tableCache:      make(map[string](*Table)),
+		lockManager:     newLockManager(),
 	}
 	return &db, nil
 }
