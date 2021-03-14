@@ -9,6 +9,8 @@ import (
 type Database struct {
 	tableCache      map[string](*Table)
 	storageLocation string
+
+	lockManager *lockManager
 }
 
 // Initializes a Database with the db databased at `filepath`
