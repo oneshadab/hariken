@@ -30,7 +30,7 @@ func (db *Database) Table(tableName string) (*Table, error) {
 	}
 
 	tableDir := filepath.Join(db.storageLocation, "tables", tableName)
-	table, err := LoadTable(tableDir)
+	table, err := LoadTable(tableName, tableDir)
 	if err != nil {
 		return nil, err
 	}

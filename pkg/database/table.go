@@ -19,14 +19,17 @@ var metadataKeys = struct {
 }
 
 type Table struct {
+	name          string
 	metaDataStore *storage.Store
 	rowStore      *storage.Store
 }
 
-func LoadTable(tableDir string) (*Table, error) {
+func LoadTable(tableName string, tableDir string) (*Table, error) {
 	var err error
 
-	table := &Table{}
+	table := &Table{
+		name: tableName,
+	}
 
 	table.metaDataStore, err = storage.NewStore(filepath.Join(tableDir, "metadata"))
 	if err != nil {
