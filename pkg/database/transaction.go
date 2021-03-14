@@ -127,6 +127,11 @@ func (tx *Transaction) DeleteRow(rowId string) {
 	tx.Err = tx.Table.Delete(rowId)
 }
 
+// Dummy commit method that only calls cleanup
+func (tx *Transaction) Commit() {
+	tx.Cleanup()
+}
+
 func (tx *Transaction) Cleanup() {
 	// Release all held locks
 	for i := range tx.locks {
