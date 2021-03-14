@@ -129,24 +129,42 @@ func (tx *Transaction) DeleteRow(rowId string) {
 
 func (tx *Transaction) Cleanup() {
 	// Release all held locks
-
 	for i := range tx.locks {
-		tx.locks[i].unlockForTx(tx.Id)
+		tx.releaseLock(tx.locks[i])
 	}
 }
 
-func (tx *Transaction) AddLock(lock *txLock) {
-	tx.locks = append(tx.locks, lock)
-}
-
 func (tx *Transaction) lockTable() {
-	lock := tx.db.lockManager.getTableLock(tx.Table.name)
-	lock.lockForTx(tx.Id)
-	tx.AddLock(lock)
+	tableLock := tx.db.lockManager.getTableLock(tx.Table.name)
+	tx.acquireLock(tableLock)
 }
 
 func (tx *Transaction) lockRow(rowId string) {
-	lock := tx.db.lockManager.getRowLock(tx.Table.name, rowId)
-	lock.lockForTx(tx.Id)
-	tx.AddLock(lock)
+	rowLock := tx.db.lockManager.getRowLock(tx.Table.name, rowId)
+	tx.acquireLock(rowLock)
+}
+
+func (tx *Transaction) acquireLock(lock *txLock) {
+	if lock.txId != nil && *lock.txId == tx.Id {
+		// Lock is already owned by current transaction so nothing to lock
+		return
+	}
+
+	// Lock and set owner to current transaction
+	lock.lock.Lock()
+	lock.txId = &tx.Id
+
+	// Add lock to list of acquiredLocks
+	tx.locks = append(tx.locks, lock)
+}
+
+func (tx *Transaction) releaseLock(lock *txLock) {
+	if lock.txId == nil || *lock.txId != tx.Id {
+		// Lock is not owned by current transaction so cannot release
+		return
+	}
+
+	// Unlock and remove lock's owner
+	lock.lock.Unlock()
+	lock.txId = nil
 }

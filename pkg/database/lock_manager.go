@@ -45,25 +45,3 @@ func (lm *lockManager) getLocker(tableId string) *tableLocker {
 
 	return lm.lockers[tableId]
 }
-
-func (tl *txLock) lockForTx(txId string) {
-	if *tl.txId == txId {
-		// Lock is already owned by current transaction so nothing to lock
-		return
-	}
-
-	// Lock and set owner to current transaction
-	tl.lock.Lock()
-	tl.txId = &txId
-}
-
-func (tl *txLock) unlockForTx(txId string) {
-	if *tl.txId != txId {
-		// Lock is not owned by current transaction so cannot release
-		return
-	}
-
-	// Unlock and remove owner
-	tl.lock.Unlock()
-	tl.txId = nil
-}
