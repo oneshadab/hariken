@@ -77,6 +77,8 @@ func (tx *Transaction) InsertRow(entries map[string]string) {
 		return
 	}
 
+	tx.lockTable()
+
 	var row *Row
 	row, tx.Err = tx.Table.Insert(entries)
 
@@ -105,7 +107,11 @@ func (tx *Transaction) UpdateAll(entries map[string]string) {
 	}
 
 	for i := range tx.Result {
-		tx.Result[i], tx.Err = tx.Table.Update(tx.Result[i].Id(), entries)
+		rowId := tx.Result[i].Id()
+
+		tx.lockRow(rowId)
+		tx.Result[i], tx.Err = tx.Table.Update(rowId, entries)
+
 		if tx.Err != nil {
 			return
 		}
@@ -117,6 +123,7 @@ func (tx *Transaction) DeleteRow(rowId string) {
 		return
 	}
 
+	tx.lockRow(rowId)
 	tx.Err = tx.Table.Delete(rowId)
 }
 
@@ -126,4 +133,20 @@ func (tx *Transaction) Cleanup() {
 	for i := range tx.locks {
 		tx.locks[i].unlockForTx(tx.Id)
 	}
+}
+
+func (tx *Transaction) AddLock(lock *txLock) {
+	tx.locks = append(tx.locks, lock)
+}
+
+func (tx *Transaction) lockTable() {
+	lock := tx.db.lockManager.getTableLock(tx.Table.name)
+	lock.lockForTx(tx.Id)
+	tx.AddLock(lock)
+}
+
+func (tx *Transaction) lockRow(rowId string) {
+	lock := tx.db.lockManager.getRowLock(tx.Table.name, rowId)
+	lock.lockForTx(tx.Id)
+	tx.AddLock(lock)
 }

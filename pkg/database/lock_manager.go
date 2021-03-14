@@ -16,7 +16,7 @@ type txLock struct {
 	lock sync.RWMutex
 }
 
-func (lm *lockManager) getTableLock(txId string, tableId string) *txLock {
+func (lm *lockManager) getTableLock(tableId string) *txLock {
 	locker := lm.getLocker(tableId)
 
 	// Ensure lock exists
@@ -27,7 +27,7 @@ func (lm *lockManager) getTableLock(txId string, tableId string) *txLock {
 	return locker.tableLock
 }
 
-func (lm *lockManager) getRowLock(txId string, tableId string, rowId string) *txLock {
+func (lm *lockManager) getRowLock(tableId string, rowId string) *txLock {
 	locker := lm.getLocker(tableId)
 
 	// Ensure lock exists
