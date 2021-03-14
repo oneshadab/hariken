@@ -22,6 +22,8 @@ func tokenize(cmd string) ([]string, error) {
 
 func ExecCommand(query string, commandHandlers map[string]interface{}) (string, error) {
 	tx := commandHandlers["startTransaction"].(func() *database.Transaction)()
+	defer tx.Cleanup()
+
 	tokens, err := tokenize(query)
 
 	if err != nil {
