@@ -14,7 +14,8 @@ type Transaction struct {
 	Table                 *Table
 	ProcessedCommandTypes map[string]bool
 
-	db *Database
+	locks []*txLock
+	db    *Database
 }
 
 func (tx *Transaction) UseTable(tableName string) {
@@ -117,4 +118,12 @@ func (tx *Transaction) DeleteRow(rowId string) {
 	}
 
 	tx.Err = tx.Table.Delete(rowId)
+}
+
+func (tx *Transaction) Cleanup() {
+	// Release all held locks
+
+	for i := range tx.locks {
+		tx.locks[i].unlockForTx(tx.Id)
+	}
 }
