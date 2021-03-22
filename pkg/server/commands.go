@@ -126,6 +126,18 @@ func exitCmd(ctx *sessionCommandContext, args []string) (string, error) {
 	return "KTHXBYE", nil
 }
 
+func (ctx *sessionCommandContext) result() (string, error) {
+	hasUsedShortResultCmd := false
+	for _, shortResultCmd := range []string{"USE", "INSERT", "DELETE"} {
+		hasUsedShortResultCmd = hasUsedShortResultCmd || ctx.ProcessedCommandTypes[shortResultCmd]
+	}
+
+	if hasUsedShortResultCmd {
+		return ctx.resultOK()
+	}
+	return ctx.resultTable()
+}
+
 func (ctx *sessionCommandContext) resultOK() (string, error) {
 	return "OK", nil
 }
