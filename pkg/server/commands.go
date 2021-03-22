@@ -15,9 +15,10 @@ type sessionCommand struct {
 
 type sessionCommandHandler func(ctx *sessionCommandContext, args []string) (result string, err error)
 type sessionCommandContext struct {
-	session *Session
-	db      *database.Database
-	tx      *database.Transaction
+	session               *Session
+	db                    *database.Database
+	tx                    *database.Transaction
+	ProcessedCommandTypes map[string]bool
 }
 
 var sessionCommands = map[string]sessionCommandHandler{
@@ -31,7 +32,7 @@ var sessionCommands = map[string]sessionCommandHandler{
 }
 
 func useCmd(ctx *sessionCommandContext, args []string) (string, error) {
-	if len(args) > 1 || len(ctx.tx.ProcessedCommandTypes) > 0 {
+	if len(args) > 1 || len(ctx.ProcessedCommandTypes) > 0 {
 		return fmt.Sprintf("Invalid syntax for `use`"), nil
 	}
 

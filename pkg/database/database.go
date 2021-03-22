@@ -43,9 +43,8 @@ func (db *Database) Table(tableName string) (*Table, error) {
 
 func (db *Database) NewTransaction() *Transaction {
 	tx := &Transaction{
-		Id:                    uuid.NewString(),
-		db:                    db,
-		ProcessedCommandTypes: make(map[string]bool),
+		Id: uuid.NewString(),
+		db: db,
 	}
 	return tx
 }

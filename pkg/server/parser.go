@@ -32,7 +32,8 @@ func parseCommand(cmdStr string) sessionCommand {
 
 func ExecCommand(query string, commandHandlers map[string]interface{}) (string, error) {
 	ctx := &sessionCommandContext{
-		tx: commandHandlers["startTransaction"].(func() *database.Transaction)(),
+		tx:                    commandHandlers["startTransaction"].(func() *database.Transaction)(),
+		ProcessedCommandTypes: make(map[string]bool),
 	}
 
 	defer ctx.tx.Cleanup()
@@ -52,12 +53,12 @@ func ExecCommand(query string, commandHandlers map[string]interface{}) (string, 
 
 		handler(ctx, cmd.args)
 
-		ctx.tx.ProcessedCommandTypes[cmd.name] = true
+		ctx.ProcessedCommandTypes[cmd.name] = true
 	}
 
-	if ctx.tx.ProcessedCommandTypes["USE"] ||
-		ctx.tx.ProcessedCommandTypes["INSERT"] ||
-		ctx.tx.ProcessedCommandTypes["DELETE"] {
+	if ctx.ProcessedCommandTypes["USE"] ||
+		ctx.ProcessedCommandTypes["INSERT"] ||
+		ctx.ProcessedCommandTypes["DELETE"] {
 		return ctx.resultOK()
 	}
 
