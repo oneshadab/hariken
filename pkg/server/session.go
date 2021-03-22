@@ -44,9 +44,9 @@ func (S *Session) Start(reader *bufio.Reader, writer *bufio.Writer) error {
 }
 
 func (S *Session) Exec(query string) (string, error) {
-	ctx := &sessionCommandContext{
-		tx:                    S.db.NewTransaction(),
-		ProcessedCommandTypes: make(map[string]bool),
+	ctx := &sesCommandContext{
+		tx:            S.db.NewTransaction(),
+		processedCmds: make(map[string]bool),
 	}
 
 	defer ctx.tx.Cleanup()
@@ -58,14 +58,13 @@ func (S *Session) Exec(query string) (string, error) {
 
 	// Todo: Make commands in a chain atomic
 	for _, cmd := range commands {
-		handler, ok := sessionCommands[cmd.name]
+		handler, ok := availableCommands[cmd.name]
 		if !ok {
 			return fmt.Sprintf("Command `%s` not found", cmd.name), nil
 		}
 
 		handler(ctx, cmd.args)
-
-		ctx.ProcessedCommandTypes[cmd.name] = true
+		ctx.processedCmds[cmd.name] = true
 	}
 
 	return ctx.result()
