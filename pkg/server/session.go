@@ -2,7 +2,7 @@ package server
 
 import (
 	"bufio"
-	"strings"
+	"fmt"
 
 	"github.com/oneshadab/hariken/pkg/database"
 	"github.com/oneshadab/hariken/pkg/protocol"
@@ -44,14 +44,31 @@ func (S *Session) Start(reader *bufio.Reader, writer *bufio.Writer) error {
 }
 
 func (S *Session) Exec(query string) (string, error) {
-	query = strings.TrimSuffix(query, "\n")
-
-	commandHandlers := map[string]interface{}{
-		"startTransaction": S.db.NewTransaction,
-		"useDatabase":      S.useDatabase,
+	ctx := &sessionCommandContext{
+		tx:                    S.db.NewTransaction(),
+		ProcessedCommandTypes: make(map[string]bool),
 	}
 
-	return ExecCommand(query, commandHandlers)
+	defer ctx.tx.Cleanup()
+
+	commands, err := parseQuery(query)
+	if err != nil {
+		return "", err
+	}
+
+	// Todo: Make commands in a chain atomic
+	for _, cmd := range commands {
+		handler, ok := sessionCommands[cmd.name]
+		if !ok {
+			return fmt.Sprintf("Command `%s` not found", cmd.name), nil
+		}
+
+		handler(ctx, cmd.args)
+
+		ctx.ProcessedCommandTypes[cmd.name] = true
+	}
+
+	return ctx.result()
 }
 
 func (S *Session) useDatabase(dbName string) error {
