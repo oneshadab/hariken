@@ -4,10 +4,10 @@ import (
 	"strings"
 )
 
-func parseQuery(query string) ([]sessionCommand, error) {
+func parseQuery(query string) ([]sesCommand, error) {
 	query = strings.TrimSuffix(query, "\n")
 
-	commands := make([]sessionCommand, 0)
+	commands := make([]sesCommand, 0)
 
 	parts := strings.Split(query, "|")
 
@@ -20,10 +20,10 @@ func parseQuery(query string) ([]sessionCommand, error) {
 	return commands, nil
 }
 
-func parseCommand(cmdStr string) sessionCommand {
+func parseCommand(cmdStr string) sesCommand {
 	parts := strings.Split(cmdStr, " ")
 
-	return sessionCommand{
+	return sesCommand{
 		name: strings.ToUpper(parts[0]),
 		args: parts[1:],
 	}

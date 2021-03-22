@@ -8,20 +8,21 @@ import (
 	"github.com/oneshadab/hariken/pkg/utils"
 )
 
-type sessionCommand struct {
+type sesCommand struct {
 	name string
 	args []string
 }
 
-type sessionCommandHandler func(ctx *sessionCommandContext, args []string) (result string, err error)
-type sessionCommandContext struct {
-	session               *Session
-	db                    *database.Database
-	tx                    *database.Transaction
-	ProcessedCommandTypes map[string]bool
+type sesCommandHandler func(ctx *sesCommandContext, args []string) (result string, err error)
+type sesCommandContext struct {
+	ses           *Session
+	db            *database.Database
+	tx            *database.Transaction
+	err           *error
+	processedCmds map[string]bool
 }
 
-var sessionCommands = map[string]sessionCommandHandler{
+var availableCommands = map[string]sesCommandHandler{
 	"USE":    useCmd,
 	"INSERT": insertCmd,
 	"GET":    getCmd,
@@ -31,14 +32,14 @@ var sessionCommands = map[string]sessionCommandHandler{
 	"EXIT":   exitCmd,
 }
 
-func useCmd(ctx *sessionCommandContext, args []string) (string, error) {
-	if len(args) > 1 || len(ctx.ProcessedCommandTypes) > 0 {
+func useCmd(ctx *sesCommandContext, args []string) (string, error) {
+	if len(args) > 1 || len(ctx.processedCmds) > 0 {
 		return fmt.Sprintf("Invalid syntax for `use`"), nil
 	}
 
 	dbName := args[0]
 
-	err := ctx.session.useDatabase(dbName)
+	err := ctx.ses.useDatabase(dbName)
 
 	if err != nil {
 		return "", err
@@ -47,7 +48,7 @@ func useCmd(ctx *sessionCommandContext, args []string) (string, error) {
 	return ctx.resultOK()
 }
 
-func insertCmd(ctx *sessionCommandContext, args []string) (string, error) {
+func insertCmd(ctx *sesCommandContext, args []string) (string, error) {
 	if len(args) <= 1 {
 		return fmt.Sprintf("Invalid syntax for `insert`"), nil
 	}
@@ -68,7 +69,7 @@ func insertCmd(ctx *sessionCommandContext, args []string) (string, error) {
 	return ctx.resultOK()
 }
 
-func getCmd(ctx *sessionCommandContext, args []string) (string, error) {
+func getCmd(ctx *sesCommandContext, args []string) (string, error) {
 	if len(args) > 1 {
 		return fmt.Sprintf("Invalid syntax for `get`"), nil
 	}
@@ -80,7 +81,7 @@ func getCmd(ctx *sessionCommandContext, args []string) (string, error) {
 	return ctx.resultTable()
 }
 
-func deleteCmd(ctx *sessionCommandContext, args []string) (string, error) {
+func deleteCmd(ctx *sesCommandContext, args []string) (string, error) {
 	for _, row := range ctx.tx.Result {
 		ctx.tx.DeleteRow(row.Id())
 	}
@@ -88,7 +89,7 @@ func deleteCmd(ctx *sessionCommandContext, args []string) (string, error) {
 	return ctx.resultOK()
 }
 
-func updateCmd(ctx *sessionCommandContext, args []string) (string, error) {
+func updateCmd(ctx *sesCommandContext, args []string) (string, error) {
 	if len(args) == 0 {
 		return fmt.Sprintf("Invalid syntax for `update`"), nil
 	}
@@ -106,7 +107,7 @@ func updateCmd(ctx *sessionCommandContext, args []string) (string, error) {
 	return ctx.resultTable()
 }
 
-func filterCmd(ctx *sessionCommandContext, args []string) (string, error) {
+func filterCmd(ctx *sesCommandContext, args []string) (string, error) {
 	if len(args) == 0 {
 		return fmt.Sprintf("Invalid syntax for `filter`"), nil
 	}
@@ -122,14 +123,14 @@ func filterCmd(ctx *sessionCommandContext, args []string) (string, error) {
 	return ctx.resultTable()
 }
 
-func exitCmd(ctx *sessionCommandContext, args []string) (string, error) {
+func exitCmd(ctx *sesCommandContext, args []string) (string, error) {
 	return "KTHXBYE", nil
 }
 
-func (ctx *sessionCommandContext) result() (string, error) {
+func (ctx *sesCommandContext) result() (string, error) {
 	hasUsedShortResultCmd := false
 	for _, shortResultCmd := range []string{"USE", "INSERT", "DELETE"} {
-		hasUsedShortResultCmd = hasUsedShortResultCmd || ctx.ProcessedCommandTypes[shortResultCmd]
+		hasUsedShortResultCmd = hasUsedShortResultCmd || ctx.processedCmds[shortResultCmd]
 	}
 
 	if hasUsedShortResultCmd {
@@ -138,11 +139,11 @@ func (ctx *sessionCommandContext) result() (string, error) {
 	return ctx.resultTable()
 }
 
-func (ctx *sessionCommandContext) resultOK() (string, error) {
+func (ctx *sesCommandContext) resultOK() (string, error) {
 	return "OK", nil
 }
 
-func (ctx *sessionCommandContext) resultTable() (string, error) {
+func (ctx *sesCommandContext) resultTable() (string, error) {
 	headers, err := ctx.tx.Table.Columns()
 	if err != nil {
 		return "", err
