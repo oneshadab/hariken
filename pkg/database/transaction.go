@@ -8,11 +8,10 @@ import (
 type QueryResult [](*Row)
 
 type Transaction struct {
-	Id                    string
-	Result                QueryResult
-	Err                   error // Query will fall-through on error
-	Table                 *Table
-	ProcessedCommandTypes map[string]bool
+	Id     string
+	Result QueryResult
+	Err    error // Query will fall-through on error
+	Table  *Table
 
 	locks []*txLock
 	db    *Database
