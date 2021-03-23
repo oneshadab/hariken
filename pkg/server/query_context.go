@@ -80,3 +80,8 @@ func (ctx *QueryContext) Err() error {
 
 	return nil
 }
+
+func (ctx *QueryContext) Cleanup() {
+	// Cleanup transaction
+	ctx.tx.Cleanup()
+}
