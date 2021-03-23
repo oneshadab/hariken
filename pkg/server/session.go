@@ -44,30 +44,30 @@ func (S *Session) Start(reader *bufio.Reader, writer *bufio.Writer) error {
 }
 
 func (S *Session) Exec(queryStr string) (string, error) {
-	ctx := &QueryContext{
-		tx:            S.db.NewTransaction(),
-		processedCmds: make(map[string]bool),
-	}
-
-	defer ctx.tx.Cleanup()
-
 	q, err := parseQuery(queryStr)
 	if err != nil {
 		return "", err
 	}
 
 	// Todo: Make commands in a chain atomic
+
+	// We create a context with all the relevant transaction/db/session info
+	ctx := S.newQueryContext()
+	defer ctx.Cleanup()
+
+	// Each command modifies the context
 	for _, cmd := range q.commands {
-		fn, ok := availableCommands[cmd.name]
+		cmdFn, ok := availableCommands[cmd.name]
 		if !ok {
 			ctx.err = NewQueryError(fmt.Sprintf("Command `%s` not found", cmd.name))
 			break
 		}
 
-		fn(ctx, cmd.args)
+		cmdFn(ctx, cmd.args)
 		ctx.processedCmds[cmd.name] = true
 	}
 
+	// Finally we return the result stored in the context
 	return ctx.result()
 }
 
@@ -80,4 +80,13 @@ func (S *Session) useDatabase(dbName string) error {
 	S.db = db
 
 	return nil
+}
+
+func (S *Session) newQueryContext() *QueryContext {
+	return &QueryContext{
+		ses:           S,
+		db:            S.db,
+		tx:            S.db.NewTransaction(),
+		processedCmds: make(map[string]bool),
+	}
 }
