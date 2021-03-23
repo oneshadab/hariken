@@ -58,12 +58,13 @@ func (S *Session) Exec(queryStr string) (string, error) {
 
 	// Todo: Make commands in a chain atomic
 	for _, cmd := range q.commands {
-		handler, ok := availableCommands[cmd.name]
+		fn, ok := availableCommands[cmd.name]
 		if !ok {
-			return fmt.Sprintf("Command `%s` not found", cmd.name), nil
+			ctx.err = NewQueryError(fmt.Sprintf("Command `%s` not found", cmd.name))
+			break
 		}
 
-		handler(ctx, cmd.args)
+		fn(ctx, cmd.args)
 		ctx.processedCmds[cmd.name] = true
 	}
 
