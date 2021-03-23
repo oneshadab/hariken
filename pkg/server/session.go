@@ -2,7 +2,6 @@ package server
 
 import (
 	"bufio"
-	"fmt"
 
 	"github.com/oneshadab/hariken/pkg/database"
 	"github.com/oneshadab/hariken/pkg/protocol"
@@ -44,30 +43,21 @@ func (S *Session) Start(reader *bufio.Reader, writer *bufio.Writer) error {
 }
 
 func (S *Session) Exec(queryStr string) (string, error) {
-	q, err := parseQuery(queryStr)
+	query, err := parseQuery(queryStr)
 	if err != nil {
 		return "", err
 	}
-
-	// Todo: Make commands in a chain atomic
 
 	// We create a context with all the relevant transaction/db/session info
 	ctx := S.newQueryContext()
 	defer ctx.Cleanup()
 
 	// Each command modifies the context
-	for _, cmd := range q.commands {
-		cmdFn, ok := availableCommands[cmd.name]
-		if !ok {
-			ctx.err = NewQueryError(fmt.Sprintf("Command `%s` not found", cmd.name))
-			break
-		}
-
-		cmdFn(ctx, cmd.args)
-		ctx.processedCmds[cmd.name] = true
+	for _, cmd := range query.commands {
+		ctx.exec(cmd)
 	}
 
-	// Finally we return the result stored in the context
+	// Finally we return the result/errror stored in the context
 	return ctx.result()
 }
 

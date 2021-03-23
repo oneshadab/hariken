@@ -133,5 +133,4 @@ func exitCmd(ctx *QueryContext, args []string) {
 	if ctx.Err() != nil {
 		return
 	}
-
 }
