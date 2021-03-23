@@ -1,7 +1,6 @@
 package server
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/oneshadab/hariken/pkg/database"
@@ -26,7 +25,7 @@ type QueryContext struct {
 	ses           *Session
 	db            *database.Database
 	tx            *database.Transaction
-	err           *error
+	err           error
 	processedCmds map[string]bool
 }
 
@@ -35,27 +34,35 @@ type QueryCommand struct {
 	args []string
 }
 
-type QueryCommandHandler func(ctx *QueryContext, args []string) (result string, err error)
+type QueryCommandHandler func(ctx *QueryContext, args []string)
 
-func useCmd(ctx *QueryContext, args []string) (string, error) {
+type QueryError struct {
+	msg string
+}
+
+func useCmd(ctx *QueryContext, args []string) {
+	if ctx.Err() != nil {
+		return
+	}
+
 	if len(args) > 1 || len(ctx.processedCmds) > 0 {
-		return fmt.Sprintf("Invalid syntax for `use`"), nil
+		ctx.err = NewQueryError("Invalid syntax for `use`")
+		return
 	}
 
 	dbName := args[0]
 
-	err := ctx.ses.useDatabase(dbName)
-
-	if err != nil {
-		return "", err
-	}
-
-	return ctx.resultOK()
+	ctx.err = ctx.ses.useDatabase(dbName)
 }
 
-func insertCmd(ctx *QueryContext, args []string) (string, error) {
+func insertCmd(ctx *QueryContext, args []string) {
+	if ctx.Err() != nil {
+		return
+	}
+
 	if len(args) <= 1 {
-		return fmt.Sprintf("Invalid syntax for `insert`"), nil
+		ctx.err = NewQueryError("Invalid syntax for `insert`")
+		return
 	}
 
 	tableName := args[0]
@@ -70,33 +77,41 @@ func insertCmd(ctx *QueryContext, args []string) (string, error) {
 
 	ctx.tx.UseTable(tableName)
 	ctx.tx.InsertRow(entries)
-
-	return ctx.resultOK()
 }
 
-func getCmd(ctx *QueryContext, args []string) (string, error) {
+func getCmd(ctx *QueryContext, args []string) {
+	if ctx.Err() != nil {
+		return
+	}
+
 	if len(args) > 1 {
-		return fmt.Sprintf("Invalid syntax for `get`"), nil
+		ctx.err = NewQueryError("Invalid syntax for `get`")
+		return
 	}
 
 	tableName := args[0]
 	ctx.tx.UseTable(tableName)
 	ctx.tx.FetchAll()
-
-	return ctx.resultTable()
 }
 
-func deleteCmd(ctx *QueryContext, args []string) (string, error) {
+func deleteCmd(ctx *QueryContext, args []string) {
+	if ctx.Err() != nil {
+		return
+	}
+
 	for _, row := range ctx.tx.Result {
 		ctx.tx.DeleteRow(row.Id())
 	}
-
-	return ctx.resultOK()
 }
 
-func updateCmd(ctx *QueryContext, args []string) (string, error) {
+func updateCmd(ctx *QueryContext, args []string) {
+	if ctx.Err() != nil {
+		return
+	}
+
 	if len(args) == 0 {
-		return fmt.Sprintf("Invalid syntax for `update`"), nil
+		ctx.err = NewQueryError("Invalid syntax for `update`")
+		return
 	}
 
 	entries := make(map[string]string)
@@ -108,13 +123,16 @@ func updateCmd(ctx *QueryContext, args []string) (string, error) {
 
 		ctx.tx.UpdateAll(entries)
 	}
-
-	return ctx.resultTable()
 }
 
-func filterCmd(ctx *QueryContext, args []string) (string, error) {
+func filterCmd(ctx *QueryContext, args []string) {
+	if ctx.Err() != nil {
+		return
+	}
+
 	if len(args) == 0 {
-		return fmt.Sprintf("Invalid syntax for `filter`"), nil
+		ctx.err = NewQueryError("Invalid syntax for `filter`")
+		return
 	}
 
 	for _, entry := range args {
@@ -124,28 +142,47 @@ func filterCmd(ctx *QueryContext, args []string) (string, error) {
 
 		ctx.tx.Filter(key, val)
 	}
-
-	return ctx.resultTable()
 }
 
-func exitCmd(ctx *QueryContext, args []string) (string, error) {
-	return "KTHXBYE", nil
+func exitCmd(ctx *QueryContext, args []string) {
+	if ctx.Err() != nil {
+		return
+	}
+
 }
 
 func (ctx *QueryContext) result() (string, error) {
-	hasUsedShortResultCmd := false
-	for _, shortResultCmd := range []string{"USE", "INSERT", "DELETE"} {
-		hasUsedShortResultCmd = hasUsedShortResultCmd || ctx.processedCmds[shortResultCmd]
+	if ctx.Err() != nil {
+		return ctx.resultErr()
 	}
 
-	if hasUsedShortResultCmd {
+	if ctx.processedCmds["exit"] {
+		return ctx.resultExit()
+	}
+
+	if ctx.hasUsedCmds("INSERT", "DELETE", "USE") {
 		return ctx.resultOK()
 	}
+
 	return ctx.resultTable()
 }
 
 func (ctx *QueryContext) resultOK() (string, error) {
 	return "OK", nil
+}
+
+func (ctx *QueryContext) resultExit() (string, error) {
+	return "KTHNXBYE", nil
+}
+
+func (ctx *QueryContext) resultErr() (string, error) {
+	err := ctx.Err()
+
+	if e, ok := err.(*QueryError); ok {
+		return e.Error(), nil
+	}
+
+	return "", ctx.err
 }
 
 func (ctx *QueryContext) resultTable() (string, error) {
@@ -161,4 +198,31 @@ func (ctx *QueryContext) resultTable() (string, error) {
 
 	output := utils.GenerateTable(headers, result)
 	return output, nil
+}
+
+func (ctx *QueryContext) hasUsedCmds(cmdNames ...string) bool {
+	for _, shortResultCmd := range cmdNames {
+		return ctx.processedCmds[shortResultCmd]
+	}
+	return false
+}
+
+func (ctx *QueryContext) Err() error {
+	if ctx.err != nil {
+		return ctx.err
+	}
+
+	if ctx.tx.Err != nil {
+		return ctx.tx.Err
+	}
+
+	return nil
+}
+
+func NewQueryError(msg string) *QueryError {
+	return &QueryError{msg: msg}
+}
+
+func (e *QueryError) Error() string {
+	return e.msg
 }
