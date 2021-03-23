@@ -43,21 +43,21 @@ func (S *Session) Start(reader *bufio.Reader, writer *bufio.Writer) error {
 	}
 }
 
-func (S *Session) Exec(query string) (string, error) {
-	ctx := &sesCommandContext{
+func (S *Session) Exec(queryStr string) (string, error) {
+	ctx := &QueryContext{
 		tx:            S.db.NewTransaction(),
 		processedCmds: make(map[string]bool),
 	}
 
 	defer ctx.tx.Cleanup()
 
-	commands, err := parseQuery(query)
+	q, err := parseQuery(queryStr)
 	if err != nil {
 		return "", err
 	}
 
 	// Todo: Make commands in a chain atomic
-	for _, cmd := range commands {
+	for _, cmd := range q.commands {
 		handler, ok := availableCommands[cmd.name]
 		if !ok {
 			return fmt.Sprintf("Command `%s` not found", cmd.name), nil

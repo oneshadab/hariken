@@ -4,12 +4,11 @@ import (
 	"strings"
 )
 
-func parseQuery(query string) ([]sesCommand, error) {
-	query = strings.TrimSuffix(query, "\n")
+func parseQuery(queryStr string) (Query, error) {
+	queryStr = strings.TrimSuffix(queryStr, "\n")
 
-	commands := make([]sesCommand, 0)
-
-	parts := strings.Split(query, "|")
+	commands := make([]QueryCommand, 0)
+	parts := strings.Split(queryStr, "|")
 
 	for _, cmdStr := range parts {
 		cmdStr = strings.TrimSpace(cmdStr)
@@ -17,13 +16,17 @@ func parseQuery(query string) ([]sesCommand, error) {
 		commands = append(commands, cmd)
 	}
 
-	return commands, nil
+	q := Query{
+		commands: commands,
+	}
+
+	return q, nil
 }
 
-func parseCommand(cmdStr string) sesCommand {
+func parseCommand(cmdStr string) QueryCommand {
 	parts := strings.Split(cmdStr, " ")
 
-	return sesCommand{
+	return QueryCommand{
 		name: strings.ToUpper(parts[0]),
 		args: parts[1:],
 	}

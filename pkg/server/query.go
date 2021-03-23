@@ -8,21 +8,7 @@ import (
 	"github.com/oneshadab/hariken/pkg/utils"
 )
 
-type sesCommand struct {
-	name string
-	args []string
-}
-
-type sesCommandHandler func(ctx *sesCommandContext, args []string) (result string, err error)
-type sesCommandContext struct {
-	ses           *Session
-	db            *database.Database
-	tx            *database.Transaction
-	err           *error
-	processedCmds map[string]bool
-}
-
-var availableCommands = map[string]sesCommandHandler{
+var availableCommands = map[string]QueryCommandHandler{
 	"USE":    useCmd,
 	"INSERT": insertCmd,
 	"GET":    getCmd,
@@ -32,7 +18,26 @@ var availableCommands = map[string]sesCommandHandler{
 	"EXIT":   exitCmd,
 }
 
-func useCmd(ctx *sesCommandContext, args []string) (string, error) {
+type Query struct {
+	commands []QueryCommand
+}
+
+type QueryContext struct {
+	ses           *Session
+	db            *database.Database
+	tx            *database.Transaction
+	err           *error
+	processedCmds map[string]bool
+}
+
+type QueryCommand struct {
+	name string
+	args []string
+}
+
+type QueryCommandHandler func(ctx *QueryContext, args []string) (result string, err error)
+
+func useCmd(ctx *QueryContext, args []string) (string, error) {
 	if len(args) > 1 || len(ctx.processedCmds) > 0 {
 		return fmt.Sprintf("Invalid syntax for `use`"), nil
 	}
@@ -48,7 +53,7 @@ func useCmd(ctx *sesCommandContext, args []string) (string, error) {
 	return ctx.resultOK()
 }
 
-func insertCmd(ctx *sesCommandContext, args []string) (string, error) {
+func insertCmd(ctx *QueryContext, args []string) (string, error) {
 	if len(args) <= 1 {
 		return fmt.Sprintf("Invalid syntax for `insert`"), nil
 	}
@@ -69,7 +74,7 @@ func insertCmd(ctx *sesCommandContext, args []string) (string, error) {
 	return ctx.resultOK()
 }
 
-func getCmd(ctx *sesCommandContext, args []string) (string, error) {
+func getCmd(ctx *QueryContext, args []string) (string, error) {
 	if len(args) > 1 {
 		return fmt.Sprintf("Invalid syntax for `get`"), nil
 	}
@@ -81,7 +86,7 @@ func getCmd(ctx *sesCommandContext, args []string) (string, error) {
 	return ctx.resultTable()
 }
 
-func deleteCmd(ctx *sesCommandContext, args []string) (string, error) {
+func deleteCmd(ctx *QueryContext, args []string) (string, error) {
 	for _, row := range ctx.tx.Result {
 		ctx.tx.DeleteRow(row.Id())
 	}
@@ -89,7 +94,7 @@ func deleteCmd(ctx *sesCommandContext, args []string) (string, error) {
 	return ctx.resultOK()
 }
 
-func updateCmd(ctx *sesCommandContext, args []string) (string, error) {
+func updateCmd(ctx *QueryContext, args []string) (string, error) {
 	if len(args) == 0 {
 		return fmt.Sprintf("Invalid syntax for `update`"), nil
 	}
@@ -107,7 +112,7 @@ func updateCmd(ctx *sesCommandContext, args []string) (string, error) {
 	return ctx.resultTable()
 }
 
-func filterCmd(ctx *sesCommandContext, args []string) (string, error) {
+func filterCmd(ctx *QueryContext, args []string) (string, error) {
 	if len(args) == 0 {
 		return fmt.Sprintf("Invalid syntax for `filter`"), nil
 	}
@@ -123,11 +128,11 @@ func filterCmd(ctx *sesCommandContext, args []string) (string, error) {
 	return ctx.resultTable()
 }
 
-func exitCmd(ctx *sesCommandContext, args []string) (string, error) {
+func exitCmd(ctx *QueryContext, args []string) (string, error) {
 	return "KTHXBYE", nil
 }
 
-func (ctx *sesCommandContext) result() (string, error) {
+func (ctx *QueryContext) result() (string, error) {
 	hasUsedShortResultCmd := false
 	for _, shortResultCmd := range []string{"USE", "INSERT", "DELETE"} {
 		hasUsedShortResultCmd = hasUsedShortResultCmd || ctx.processedCmds[shortResultCmd]
@@ -139,11 +144,11 @@ func (ctx *sesCommandContext) result() (string, error) {
 	return ctx.resultTable()
 }
 
-func (ctx *sesCommandContext) resultOK() (string, error) {
+func (ctx *QueryContext) resultOK() (string, error) {
 	return "OK", nil
 }
 
-func (ctx *sesCommandContext) resultTable() (string, error) {
+func (ctx *QueryContext) resultTable() (string, error) {
 	headers, err := ctx.tx.Table.Columns()
 	if err != nil {
 		return "", err
