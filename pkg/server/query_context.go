@@ -1,6 +1,8 @@
 package server
 
 import (
+	"fmt"
+
 	"github.com/oneshadab/hariken/pkg/database"
 	"github.com/oneshadab/hariken/pkg/utils"
 )
@@ -13,12 +15,24 @@ type QueryContext struct {
 	processedCmds map[string]bool
 }
 
+func (ctx *QueryContext) exec(cmd QueryCommand) {
+	cmdFn, ok := availableCommands[cmd.name]
+
+	if !ok {
+		ctx.err = NewQueryError(fmt.Sprintf("Command `%s` not found", cmd.name))
+		return
+	}
+
+	cmdFn(ctx, cmd.args)
+	ctx.processedCmds[cmd.name] = true
+}
+
 func (ctx *QueryContext) result() (string, error) {
 	if ctx.Err() != nil {
 		return ctx.resultErr()
 	}
 
-	if ctx.processedCmds["exit"] {
+	if ctx.processedCmds["EXIT"] {
 		return ctx.resultExit()
 	}
 
@@ -34,7 +48,7 @@ func (ctx *QueryContext) resultOK() (string, error) {
 }
 
 func (ctx *QueryContext) resultExit() (string, error) {
-	return "KTHNXBYE", nil
+	return "KTHXBYE", nil
 }
 
 func (ctx *QueryContext) resultErr() (string, error) {
@@ -63,8 +77,10 @@ func (ctx *QueryContext) resultTable() (string, error) {
 }
 
 func (ctx *QueryContext) hasUsedCmds(cmdNames ...string) bool {
-	for _, shortResultCmd := range cmdNames {
-		return ctx.processedCmds[shortResultCmd]
+	for _, cmdName := range cmdNames {
+		if ctx.processedCmds[cmdName] {
+			return true
+		}
 	}
 	return false
 }
